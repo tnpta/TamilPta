@@ -1,6 +1,6 @@
 import React from 'react';
 import { TranslationContent } from '../types';
-import { Mail, MapPin, Phone, Facebook, Youtube, Twitter, Instagram, ArrowUp, Heart } from 'lucide-react';
+import { Mail, MapPin, Phone, Facebook, Youtube, Twitter, Instagram, ArrowUp } from 'lucide-react';
 
 interface FooterProps {
   t: TranslationContent;
@@ -130,15 +130,10 @@ const Footer: React.FC<FooterProps> = ({ t }) => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-500 text-sm text-center md:text-left">
+        <div className="border-t border-gray-800 pt-8 flex justify-center items-center">
+          <p className="text-gray-500 text-sm text-center">
             © {new Date().getFullYear()} {t.footer.copyright}
           </p>
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <span>{t.footer.madeWith}</span>
-            <Heart size={14} className="text-red-500" fill="currentColor" />
-            <span>{t.footer.forTamilNadu}</span>
-          </div>
         </div>
       </div>
 
