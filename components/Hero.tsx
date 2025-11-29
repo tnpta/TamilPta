@@ -53,7 +53,7 @@ const Hero: React.FC<HeroProps> = ({ t }) => {
   ];
 
   return (
-    <section id="home" className="relative min-h-screen flex items-center pt-24 md:pt-32 overflow-hidden">
+    <section id="home" className="relative min-h-screen flex items-center pt-20 pb-24 md:pt-32 md:pb-32 overflow-hidden">
       {/* Carousel Background */}
       <div className="absolute inset-0 z-0">
         {carouselImages.map((image, index) => (
@@ -76,17 +76,17 @@ const Hero: React.FC<HeroProps> = ({ t }) => {
       {/* Carousel Controls */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all hover:scale-110"
+        className="absolute left-2 md:left-8 top-1/3 md:top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all hover:scale-110"
         aria-label="Previous slide"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={20} className="md:w-6 md:h-6" />
       </button>
       <button
         onClick={nextSlide}
-        className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all hover:scale-110"
+        className="absolute right-2 md:right-8 top-1/3 md:top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all hover:scale-110"
         aria-label="Next slide"
       >
-        <ChevronRight size={24} />
+        <ChevronRight size={20} className="md:w-6 md:h-6" />
       </button>
 
       {/* Main Content */}
@@ -99,15 +99,15 @@ const Hero: React.FC<HeroProps> = ({ t }) => {
               {carouselImages[currentSlide].title}
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight">
               {t.title}
             </h1>
 
-            <p className="text-xl md:text-2xl font-medium text-tn-yellow mb-4">
+            <p className="text-lg sm:text-xl md:text-2xl font-medium text-tn-yellow mb-3 md:mb-4">
               {t.tagline}
             </p>
 
-            <p className="text-lg text-gray-300 mb-8 max-w-xl leading-relaxed">
+            <p className="text-base md:text-lg text-gray-300 mb-6 md:mb-8 max-w-xl leading-relaxed">
               {t.intro}
             </p>
 
@@ -145,18 +145,19 @@ const Hero: React.FC<HeroProps> = ({ t }) => {
         </div>
 
         {/* Mobile Stats */}
-        <div className="grid grid-cols-4 gap-2 mt-8 lg:hidden">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8 mb-16 lg:hidden">
           {stats.map((stat, i) => (
-            <div key={i} className="bg-white/10 backdrop-blur-md p-3 rounded-xl text-center border border-white/10">
-              <h3 className="text-xl font-bold text-white">{stat.num}</h3>
-              <p className="text-xs text-gray-300">{stat.label}</p>
+            <div key={i} className="bg-white/15 backdrop-blur-md p-4 rounded-xl text-center border border-white/20">
+              <stat.icon className="w-6 h-6 text-tn-yellow mx-auto mb-2" />
+              <h3 className="text-2xl sm:text-xl font-bold text-white">{stat.num}</h3>
+              <p className="text-xs text-gray-300 mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Wave Decoration */}
-      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] z-10">
+      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] z-10 pointer-events-none">
         <svg
           className="relative block w-full h-[60px] md:h-[100px]"
           xmlns="http://www.w3.org/2000/svg"
