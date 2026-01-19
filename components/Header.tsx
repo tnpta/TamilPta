@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Globe, Phone, Mail } from 'lucide-react';
 import { Language, TranslationContent } from '../types';
 
@@ -11,6 +12,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,13 +26,15 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
     setLanguage(language === 'en' ? 'ta' : 'en');
   };
 
+  const isHomePage = location.pathname === '/';
+
   const navLinks = [
-    { name: t.nav.home, href: '#home' },
-    { name: t.nav.about, href: '#about' },
-    { name: t.nav.parents, href: '#parents' },
-    { name: t.nav.teachers, href: '#teachers' },
-    { name: t.nav.students, href: '#students' },
-    { name: t.nav.contact, href: '#contact' },
+    { name: t.nav.home, href: isHomePage ? '#home' : '/', isAnchor: isHomePage },
+    { name: t.nav.about, href: isHomePage ? '#about' : '/#about', isAnchor: isHomePage },
+    { name: t.nav.parents, href: isHomePage ? '#parents' : '/#parents', isAnchor: isHomePage },
+    { name: t.nav.teachers, href: isHomePage ? '#teachers' : '/#teachers', isAnchor: isHomePage },
+    { name: t.nav.students, href: isHomePage ? '#students' : '/#students', isAnchor: isHomePage },
+    { name: t.nav.contact, href: isHomePage ? '#contact' : '/#contact', isAnchor: isHomePage },
   ];
 
   return (
@@ -54,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
 
       {/* Main Header */}
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <a href="#home" className="flex items-center gap-3 group">
+        <Link to="/" className="flex items-center gap-3 group">
           <img
             src="/logo.png"
             alt="Tamil PTA Logo"
@@ -68,21 +72,37 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
               {language === 'en' ? 'Tamilnadu State Parent Teachers Association' : 'தமிழ்நாடு மாநில பெற்றோர் ஆசிரியர் சங்கம்'}
             </span>
           </div>
-        </a>
+        </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-8">
+        <div className="hidden lg:flex items-center gap-6">
           <nav className="flex gap-1">
             {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="px-4 py-2 text-gray-700 hover:text-tn-green hover:bg-tn-green/5 rounded-lg font-medium transition-all text-sm"
-              >
-                {link.name}
-              </a>
+              link.isAnchor ? (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="px-3 py-2 text-gray-700 hover:text-tn-green hover:bg-tn-green/5 rounded-lg font-medium transition-all text-sm"
+                >
+                  {link.name}
+                </a>
+              ) : (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className="px-3 py-2 text-gray-700 hover:text-tn-green hover:bg-tn-green/5 rounded-lg font-medium transition-all text-sm"
+                >
+                  {link.name}
+                </Link>
+              )
             ))}
           </nav>
+          <Link
+            to="/register-school"
+            className="px-4 py-2 bg-tn-orange text-white rounded-lg font-semibold hover:bg-tn-orange/90 hover:shadow-lg transition-all text-sm"
+          >
+            {language === 'en' ? 'Register School' : 'பள்ளி பதிவு'}
+          </Link>
           <button
             onClick={toggleLanguage}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-full hover:shadow-lg hover:scale-105 transition-all text-sm font-semibold"
@@ -114,15 +134,33 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
       <div className={`lg:hidden bg-white border-t border-gray-100 absolute w-full shadow-xl transition-all duration-300 ${isMobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
         <nav className="flex flex-col p-4">
           {navLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="py-3 px-4 text-gray-700 hover:text-tn-green hover:bg-tn-green/5 font-medium rounded-lg transition-all"
-            >
-              {link.name}
-            </a>
+            link.isAnchor ? (
+              <a
+                key={link.name}
+                href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-3 px-4 text-gray-700 hover:text-tn-green hover:bg-tn-green/5 font-medium rounded-lg transition-all"
+              >
+                {link.name}
+              </a>
+            ) : (
+              <Link
+                key={link.name}
+                to={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-3 px-4 text-gray-700 hover:text-tn-green hover:bg-tn-green/5 font-medium rounded-lg transition-all"
+              >
+                {link.name}
+              </Link>
+            )
           ))}
+          <Link
+            to="/register-school"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="mt-2 py-3 px-4 bg-tn-orange text-white text-center font-semibold rounded-lg hover:bg-tn-orange/90 transition-all"
+          >
+            {language === 'en' ? 'Register School' : 'பள்ளி பதிவு'}
+          </Link>
         </nav>
       </div>
     </header>
