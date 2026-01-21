@@ -298,24 +298,7 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
           ) : (
             <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
               <>
-                {/* Manual Entry Mode */}
                 <div className="space-y-6">
-                  <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 mb-6">
-                    <div className="flex items-center gap-3">
-                      <Edit3 className="text-orange-600" size={24} />
-                      <div>
-                        <h3 className="font-bold text-orange-800">
-                          {language === 'en' ? 'Manual Entry Mode' : 'கைமுறை உள்ளீட்டு முறை'}
-                        </h3>
-                        <p className="text-sm text-orange-700">
-                          {language === 'en'
-                            ? 'Enter your school details below'
-                            : 'கீழே உங்கள் பள்ளி விவரங்களை உள்ளிடவும்'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* School Name with Autocomplete */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
