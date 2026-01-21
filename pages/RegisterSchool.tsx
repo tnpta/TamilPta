@@ -361,8 +361,15 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                           const pin = e.target.value.replace(/\D/g, ''); // Only digits
                           setManualPincode(pin);
 
-                          // Validate PIN when 6 digits entered
-                          if (pin.length === 6) {
+                          // Validate as user types
+                          if (pin.length > 0 && !pin.startsWith('6')) {
+                            // Tamil Nadu PIN codes must start with 6
+                            setPinWarning(language === 'en'
+                              ? 'Tamil Nadu PIN codes start with 6'
+                              : 'தமிழ்நாடு அஞ்சல் குறியீடுகள் 6 இல் தொடங்கும்');
+                            setSuggestedDistrict(null);
+                          } else if (pin.length === 6) {
+                            // Full PIN entered - validate against district
                             const validation = validatePinForDistrict(pin, manualDistrict);
                             if (!validation.isValid && validation.message) {
                               setPinWarning(validation.message);
@@ -383,17 +390,25 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                             setSuggestedDistrict(null);
                           }
                         }}
+                        onBlur={() => {
+                          // Validate on blur if PIN is incomplete
+                          if (manualPincode.length > 0 && manualPincode.length < 6) {
+                            setPinWarning(language === 'en'
+                              ? 'PIN code must be 6 digits'
+                              : 'அஞ்சல் குறியீடு 6 இலக்கங்களாக இருக்க வேண்டும்');
+                          }
+                        }}
                         placeholder={language === 'en' ? 'Enter 6-digit PIN code' : '6 இலக்க அஞ்சல் குறியீட்டை உள்ளிடவும்'}
                         maxLength={6}
                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all ${
-                          pinWarning ? 'border-orange-400 bg-orange-50' : 'border-gray-300'
+                          pinWarning ? 'border-red-400 bg-red-50' : 'border-gray-300'
                         }`}
                       />
                       {pinWarning && (
-                        <div className="mt-2 flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
+                        <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-2">
+                          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
                           <div className="text-xs">
-                            <p className="text-orange-600 font-medium">{pinWarning}</p>
+                            <p className="text-red-600 font-medium">{pinWarning}</p>
                             {suggestedDistrict && (
                               <button
                                 type="button"
@@ -402,11 +417,11 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                                   setPinWarning(null);
                                   setSuggestedDistrict(null);
                                 }}
-                                className="text-tn-green hover:underline mt-1"
+                                className="text-tn-green font-semibold hover:underline mt-1"
                               >
                                 {language === 'en'
-                                  ? `Use ${suggestedDistrict} instead?`
-                                  : `${suggestedDistrict} பயன்படுத்தவா?`}
+                                  ? `Click to use ${suggestedDistrict}`
+                                  : `${suggestedDistrict} பயன்படுத்த கிளிக் செய்யவும்`}
                               </button>
                             )}
                           </div>
