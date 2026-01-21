@@ -35,6 +35,7 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
   const [manualPincode, setManualPincode] = useState('');
   const [pinWarning, setPinWarning] = useState<string | null>(null);
   const [suggestedDistrict, setSuggestedDistrict] = useState<string | null>(null);
+  const [expectedPinRange, setExpectedPinRange] = useState<string | null>(null);
 
   const r = t.registration;
   const language = t.nav.home === 'Home' ? 'en' : 'ta';
@@ -374,9 +375,11 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                             if (!validation.isValid && validation.message) {
                               setPinWarning(validation.message);
                               setSuggestedDistrict(validation.suggestedDistrict);
+                              setExpectedPinRange(validation.expectedRange);
                             } else {
                               setPinWarning(null);
                               setSuggestedDistrict(null);
+                              setExpectedPinRange(null);
                               // Auto-fill district if empty
                               if (!manualDistrict) {
                                 const detected = getDistrictForPin(pin);
@@ -388,6 +391,7 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                           } else {
                             setPinWarning(null);
                             setSuggestedDistrict(null);
+                            setExpectedPinRange(null);
                           }
                         }}
                         onBlur={() => {
@@ -409,6 +413,13 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                           <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
                           <div className="text-xs">
                             <p className="text-red-600 font-medium">{pinWarning}</p>
+                            {expectedPinRange && (
+                              <p className="text-gray-600 mt-1">
+                                {language === 'en'
+                                  ? `Expected PIN range: ${expectedPinRange}`
+                                  : `எதிர்பார்க்கப்படும் அஞ்சல் குறியீடு: ${expectedPinRange}`}
+                              </p>
+                            )}
                             {suggestedDistrict && (
                               <button
                                 type="button"
@@ -416,6 +427,7 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                                   setManualDistrict(suggestedDistrict);
                                   setPinWarning(null);
                                   setSuggestedDistrict(null);
+                                  setExpectedPinRange(null);
                                 }}
                                 className="text-tn-green font-semibold hover:underline mt-1"
                               >

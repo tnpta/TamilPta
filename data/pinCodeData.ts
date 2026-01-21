@@ -71,38 +71,84 @@ export const getDistrictForPin = (pin: string): string | null => {
   return null;
 };
 
+// Check if a PIN code is in a district's known range
+export const isPinInDistrictRange = (pin: string, district: string): boolean => {
+  const pinNum = parseInt(pin, 10);
+  const districtData = districtPinRanges.find(
+    d => d.district.toLowerCase() === district.toLowerCase()
+  );
+
+  if (!districtData) return true; // Unknown district, can't validate
+
+  for (const range of districtData.ranges) {
+    if (pinNum >= range.start && pinNum <= range.end) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+// Get expected PIN range for a district
+export const getDistrictPinRange = (district: string): string | null => {
+  const districtData = districtPinRanges.find(
+    d => d.district.toLowerCase() === district.toLowerCase()
+  );
+
+  if (!districtData) return null;
+
+  const ranges = districtData.ranges.map(r => `${r.start}-${r.end}`).join(', ');
+  return ranges;
+};
+
 // Validate if PIN code matches selected district
 export const validatePinForDistrict = (pin: string, district: string): {
   isValid: boolean;
   suggestedDistrict: string | null;
   message: string | null;
+  expectedRange: string | null;
 } => {
   if (pin.length !== 6) {
-    return { isValid: true, suggestedDistrict: null, message: null };
+    return { isValid: true, suggestedDistrict: null, message: null, expectedRange: null };
   }
 
   if (!isValidTamilNaduPin(pin)) {
     return {
       isValid: false,
       suggestedDistrict: null,
-      message: 'PIN code must start with 6 for Tamil Nadu'
+      message: 'PIN code must start with 6 for Tamil Nadu',
+      expectedRange: null
     };
   }
 
   const detectedDistrict = getDistrictForPin(pin);
 
-  if (!detectedDistrict) {
-    // PIN is valid format but not in our database - allow it
-    return { isValid: true, suggestedDistrict: null, message: null };
+  // If we detected which district this PIN belongs to
+  if (detectedDistrict) {
+    if (district && detectedDistrict.toLowerCase() !== district.toLowerCase()) {
+      return {
+        isValid: false,
+        suggestedDistrict: detectedDistrict,
+        message: `This PIN code belongs to ${detectedDistrict}`,
+        expectedRange: getDistrictPinRange(district)
+      };
+    }
+    return { isValid: true, suggestedDistrict: null, message: null, expectedRange: null };
   }
 
-  if (district && detectedDistrict.toLowerCase() !== district.toLowerCase()) {
-    return {
-      isValid: false,
-      suggestedDistrict: detectedDistrict,
-      message: `This PIN code belongs to ${detectedDistrict}`
-    };
+  // PIN not found in any known range - check if it's valid for selected district
+  if (district) {
+    const isInRange = isPinInDistrictRange(pin, district);
+    if (!isInRange) {
+      const expectedRange = getDistrictPinRange(district);
+      return {
+        isValid: false,
+        suggestedDistrict: null,
+        message: `This PIN code is not valid for ${district}`,
+        expectedRange: expectedRange
+      };
+    }
   }
 
-  return { isValid: true, suggestedDistrict: null, message: null };
+  return { isValid: true, suggestedDistrict: null, message: null, expectedRange: null };
 };
