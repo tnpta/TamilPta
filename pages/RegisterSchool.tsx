@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Check, School, Building, Users, FileText, CreditCard, AlertCircle, MapPin, Edit3 } from 'lucide-react';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 import { schoolsData, getDistricts, getBlocksForDistrict, getSchoolsForBlock } from '../data/schoolsData';
 import BasicInfoForm from '../components/registration/BasicInfoForm';
 import TrustManagementForm from '../components/registration/TrustManagementForm';
@@ -342,20 +343,29 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                     />
                   </div>
 
-                  {/* Full Address */}
+                  {/* Full Address with Autocomplete */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       <MapPin className="inline mr-1" size={16} />
                       {language === 'en' ? 'Full Address' : 'முழு முகவரி'} <span className="text-red-500">*</span>
                     </label>
-                    <textarea
+                    <AddressAutocomplete
                       value={manualAddress}
-                      onChange={(e) => setManualAddress(e.target.value)}
+                      onChange={setManualAddress}
+                      onSelect={(suggestion) => {
+                        // Auto-fill district from address suggestion
+                        if (suggestion.address?.state_district) {
+                          setManualDistrict(suggestion.address.state_district);
+                        }
+                        // Auto-fill pincode from address suggestion
+                        if (suggestion.address?.postcode) {
+                          setManualPincode(suggestion.address.postcode);
+                        }
+                      }}
                       placeholder={language === 'en'
-                        ? 'Enter complete address including street, area, city, taluk'
-                        : 'தெரு, பகுதி, நகரம், தாலுகா உள்ளிட்ட முழு முகவரியை உள்ளிடவும்'}
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all"
+                        ? 'Start typing to search for address...'
+                        : 'முகவரியைத் தேடத் தட்டச்சு செய்யத் தொடங்கவும்...'}
+                      language={language}
                     />
                   </div>
 
