@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Check, School, Building, Users, FileText, CreditCard, AlertCircle, MapPin, Edit3 } from 'lucide-react';
 import AddressAutocomplete from '../components/AddressAutocomplete';
+import SchoolAutocomplete from '../components/SchoolAutocomplete';
 import { schoolsData, getDistricts, getBlocksForDistrict, getSchoolsForBlock } from '../data/schoolsData';
 import BasicInfoForm from '../components/registration/BasicInfoForm';
 import TrustManagementForm from '../components/registration/TrustManagementForm';
@@ -315,17 +316,30 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                     </div>
                   </div>
 
-                  {/* School Name */}
+                  {/* School Name with Autocomplete */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       {language === 'en' ? 'School Name' : 'பள்ளியின் பெயர்'} <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
+                    <SchoolAutocomplete
                       value={manualSchoolName}
-                      onChange={(e) => setManualSchoolName(e.target.value)}
-                      placeholder={language === 'en' ? 'Enter full school name' : 'முழு பள்ளி பெயரை உள்ளிடவும்'}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all"
+                      onChange={setManualSchoolName}
+                      onSelect={(suggestion) => {
+                        // Auto-fill address from school suggestion
+                        setManualAddress(suggestion.display_name);
+                        // Auto-fill district from school suggestion
+                        if (suggestion.address?.state_district) {
+                          setManualDistrict(suggestion.address.state_district);
+                        }
+                        // Auto-fill pincode from school suggestion
+                        if (suggestion.address?.postcode) {
+                          setManualPincode(suggestion.address.postcode);
+                        }
+                      }}
+                      placeholder={language === 'en'
+                        ? 'Start typing to search for school...'
+                        : 'பள்ளியைத் தேடத் தட்டச்சு செய்யத் தொடங்கவும்...'}
+                      language={language}
                     />
                   </div>
 
