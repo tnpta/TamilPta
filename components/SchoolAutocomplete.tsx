@@ -239,11 +239,11 @@ const SchoolAutocomplete: React.FC<SchoolAutocompleteProps> = ({
       )}
 
       {/* Helper text */}
-      <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-        <span className="text-tn-green">*</span>
+      <p className="text-xs text-gray-500 mt-2">
+        <span className="text-tn-green font-bold">Tip: </span>
         {language === 'en'
-          ? 'Start typing to see school suggestions, or enter your school name manually'
-          : 'பள்ளி பரிந்துரைகளைப் பார்க்க தட்டச்சு செய்யத் தொடங்கவும், அல்லது உங்கள் பள்ளி பெயரை கைமுறையாக உள்ளிடவும்'}
+          ? 'Type your school name. If not in suggestions, just enter the full name manually and continue.'
+          : 'உங்கள் பள்ளி பெயரை தட்டச்சு செய்யவும். பரிந்துரைகளில் இல்லையென்றால், முழு பெயரை கைமுறையாக உள்ளிட்டு தொடரவும்.'}
       </p>
     </div>
   );

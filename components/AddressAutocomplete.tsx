@@ -217,11 +217,11 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       )}
 
       {/* Helper text */}
-      <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-        <span className="text-tn-green">*</span>
+      <p className="text-xs text-gray-500 mt-2">
+        <span className="text-tn-green font-bold">Tip: </span>
         {language === 'en'
-          ? 'Start typing to see address suggestions, or enter your full address manually'
-          : 'முகவரி பரிந்துரைகளைப் பார்க்க தட்டச்சு செய்யத் தொடங்கவும், அல்லது உங்கள் முழு முகவரியை கைமுறையாக உள்ளிடவும்'}
+          ? 'Type your address. If not in suggestions, just enter the full address manually and continue.'
+          : 'உங்கள் முகவரியை தட்டச்சு செய்யவும். பரிந்துரைகளில் இல்லையென்றால், முழு முகவரியை கைமுறையாக உள்ளிட்டு தொடரவும்.'}
       </p>
     </div>
   );
