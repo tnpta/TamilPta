@@ -157,120 +157,144 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
   if (currentStep === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pt-32 pb-16">
-        <div className="container mx-auto px-4 max-w-2xl">
+        <div className="container mx-auto px-4 max-w-5xl">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{r.pageTitle}</h1>
             <p className="text-gray-600">{r.pageSubtitle}</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            {!isManualEntry ? (
-              <>
-                {/* Dropdown Selection Mode */}
-                <div className="space-y-6">
-                  {/* District */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      {r.selectSchool.district} <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={selectedDistrict}
-                      onChange={handleDistrictChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all"
-                    >
-                      <option value="">{r.selectSchool.selectDistrict}</option>
-                      {districts.map(district => (
-                        <option key={district} value={district}>{district}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Block */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      {r.selectSchool.block} <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={selectedBlock}
-                      onChange={handleBlockChange}
-                      disabled={!selectedDistrict}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      <option value="">{r.selectSchool.selectBlock}</option>
-                      {blocks.map(block => (
-                        <option key={block} value={block}>{block}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* School */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      {r.selectSchool.school} <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={selectedSchool?.id || ''}
-                      onChange={handleSchoolChange}
-                      disabled={!selectedBlock}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      <option value="">{r.selectSchool.selectSchool}</option>
-                      {schools.map(school => (
-                        <option key={school.id} value={school.id}>{school.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {selectedSchool && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <p className="text-sm text-green-800">
-                        <span className="font-semibold">{r.selectSchool.selectedSchool}</span> {selectedSchool.name}
-                      </p>
-                      <p className="text-sm text-green-700 mt-1">
-                        {selectedBlock}, {selectedDistrict}
-                      </p>
+          {!isManualEntry ? (
+            <>
+              {/* Two Column Layout - Dropdown + Manual Entry Option */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column - Dropdown Selection */}
+                <div className="bg-white rounded-2xl shadow-xl p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-tn-green/10 rounded-full p-2">
+                      <School className="text-tn-green" size={24} />
                     </div>
-                  )}
+                    <h2 className="text-lg font-bold text-gray-800">
+                      {language === 'en' ? 'Select Your School' : 'உங்கள் பள்ளியைத் தேர்ந்தெடுக்கவும்'}
+                    </h2>
+                  </div>
+
+                  <div className="space-y-5">
+                    {/* District */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {r.selectSchool.district} <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={selectedDistrict}
+                        onChange={handleDistrictChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all"
+                      >
+                        <option value="">{r.selectSchool.selectDistrict}</option>
+                        {districts.map(district => (
+                          <option key={district} value={district}>{district}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Block */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {r.selectSchool.block} <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={selectedBlock}
+                        onChange={handleBlockChange}
+                        disabled={!selectedDistrict}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">{r.selectSchool.selectBlock}</option>
+                        {blocks.map(block => (
+                          <option key={block} value={block}>{block}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* School */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {r.selectSchool.school} <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={selectedSchool?.id || ''}
+                        onChange={handleSchoolChange}
+                        disabled={!selectedBlock}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">{r.selectSchool.selectSchool}</option>
+                        {schools.map(school => (
+                          <option key={school.id} value={school.id}>{school.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {selectedSchool && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p className="text-sm text-green-800">
+                          <span className="font-semibold">{r.selectSchool.selectedSchool}</span> {selectedSchool.name}
+                        </p>
+                        <p className="text-sm text-green-700 mt-1">
+                          {selectedBlock}, {selectedDistrict}
+                        </p>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={handleProceed}
+                      disabled={!selectedSchool}
+                      className="w-full py-4 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {r.selectSchool.proceed}
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right Column - Manual Entry Option */}
+                <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-xl p-8 text-white flex flex-col">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="bg-white/20 rounded-full p-3">
+                      <AlertCircle size={28} />
+                    </div>
+                    <h2 className="text-xl font-bold">
+                      {language === 'en' ? "Can't find your school?" : 'உங்கள் பள்ளி கிடைக்கவில்லையா?'}
+                    </h2>
+                  </div>
+
+                  <p className="text-white/90 mb-6 flex-grow">
+                    {language === 'en'
+                      ? "If your school is not listed in the dropdown menu, don't worry! You can enter your school details manually by clicking the button below."
+                      : "கீழ்தோன்றும் பட்டியலில் உங்கள் பள்ளி இல்லையென்றால், கவலைப்பட வேண்டாம்! கீழே உள்ள பொத்தானைக் கிளிக் செய்து உங்கள் பள்ளி விவரங்களை கைமுறையாக உள்ளிடலாம்."}
+                  </p>
+
+                  <div className="bg-white/10 rounded-xl p-4 mb-6">
+                    <h4 className="font-semibold mb-2">
+                      {language === 'en' ? 'You will need to provide:' : 'நீங்கள் வழங்க வேண்டியவை:'}
+                    </h4>
+                    <ul className="text-sm text-white/90 space-y-1">
+                      <li>• {language === 'en' ? 'School Name' : 'பள்ளியின் பெயர்'}</li>
+                      <li>• {language === 'en' ? 'District' : 'மாவட்டம்'}</li>
+                      <li>• {language === 'en' ? 'Full Address' : 'முழு முகவரி'}</li>
+                      <li>• {language === 'en' ? 'PIN Code' : 'அஞ்சல் குறியீடு'}</li>
+                    </ul>
+                  </div>
 
                   <button
-                    onClick={handleProceed}
-                    disabled={!selectedSchool}
-                    className="w-full py-4 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    onClick={() => setIsManualEntry(true)}
+                    className="w-full bg-white text-orange-600 px-6 py-4 rounded-lg font-bold hover:bg-orange-50 transition-all flex items-center justify-center gap-2 shadow-lg"
                   >
-                    {r.selectSchool.proceed}
-                    <ChevronRight size={20} />
+                    <Edit3 size={20} />
+                    {language === 'en' ? 'Enter School Details Manually' : 'பள்ளி விவரங்களை கைமுறையாக உள்ளிடவும்'}
                   </button>
                 </div>
-
-                {/* School Not Listed Section - BOLD & PROMINENT */}
-                <div className="mt-8 pt-8 border-t-2 border-dashed border-gray-300">
-                  <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-6 text-white shadow-lg">
-                    <div className="flex items-start gap-4">
-                      <div className="bg-white/20 rounded-full p-3 flex-shrink-0">
-                        <AlertCircle size={28} />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold mb-2">
-                          {language === 'en' ? "Can't find your school?" : 'உங்கள் பள்ளி கிடைக்கவில்லையா?'}
-                        </h3>
-                        <p className="text-white/90 mb-4">
-                          {language === 'en'
-                            ? "If your school is not listed in the dropdown, you can enter your school details manually."
-                            : "பட்டியலில் உங்கள் பள்ளி இல்லையென்றால், உங்கள் பள்ளி விவரங்களை கைமுறையாக உள்ளிடலாம்."}
-                        </p>
-                        <button
-                          onClick={() => setIsManualEntry(true)}
-                          className="bg-white text-orange-600 px-6 py-3 rounded-lg font-bold hover:bg-orange-50 transition-all flex items-center gap-2 shadow-md"
-                        >
-                          <Edit3 size={20} />
-                          {language === 'en' ? 'Enter School Details Manually' : 'பள்ளி விவரங்களை கைமுறையாக உள்ளிடவும்'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
+              </div>
+            </>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
               <>
                 {/* Manual Entry Mode */}
                 <div className="space-y-6">
@@ -380,8 +404,8 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                   </button>
                 </div>
               </>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     );
