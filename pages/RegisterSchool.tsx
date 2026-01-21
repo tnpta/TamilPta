@@ -5,6 +5,7 @@ import AddressAutocomplete from '../components/AddressAutocomplete';
 import SchoolAutocomplete from '../components/SchoolAutocomplete';
 import DistrictAutocomplete from '../components/DistrictAutocomplete';
 import { schoolsData, getDistricts, getBlocksForDistrict, getSchoolsForBlock } from '../data/schoolsData';
+import { validatePinForDistrict, getDistrictForPin, isValidTamilNaduPin } from '../data/pinCodeData';
 import BasicInfoForm from '../components/registration/BasicInfoForm';
 import TrustManagementForm from '../components/registration/TrustManagementForm';
 import StaffStudentsForm from '../components/registration/StaffStudentsForm';
@@ -32,6 +33,8 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
   const [manualAddress, setManualAddress] = useState('');
   const [manualDistrict, setManualDistrict] = useState('');
   const [manualPincode, setManualPincode] = useState('');
+  const [pinWarning, setPinWarning] = useState<string | null>(null);
+  const [suggestedDistrict, setSuggestedDistrict] = useState<string | null>(null);
 
   const r = t.registration;
   const language = t.nav.home === 'Home' ? 'en' : 'ta';
@@ -354,11 +357,61 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                       <input
                         type="text"
                         value={manualPincode}
-                        onChange={(e) => setManualPincode(e.target.value)}
+                        onChange={(e) => {
+                          const pin = e.target.value.replace(/\D/g, ''); // Only digits
+                          setManualPincode(pin);
+
+                          // Validate PIN when 6 digits entered
+                          if (pin.length === 6) {
+                            const validation = validatePinForDistrict(pin, manualDistrict);
+                            if (!validation.isValid && validation.message) {
+                              setPinWarning(validation.message);
+                              setSuggestedDistrict(validation.suggestedDistrict);
+                            } else {
+                              setPinWarning(null);
+                              setSuggestedDistrict(null);
+                              // Auto-fill district if empty
+                              if (!manualDistrict) {
+                                const detected = getDistrictForPin(pin);
+                                if (detected) {
+                                  setManualDistrict(detected);
+                                }
+                              }
+                            }
+                          } else {
+                            setPinWarning(null);
+                            setSuggestedDistrict(null);
+                          }
+                        }}
                         placeholder={language === 'en' ? 'Enter 6-digit PIN code' : '6 இலக்க அஞ்சல் குறியீட்டை உள்ளிடவும்'}
                         maxLength={6}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all ${
+                          pinWarning ? 'border-orange-400 bg-orange-50' : 'border-gray-300'
+                        }`}
                       />
+                      {pinWarning && (
+                        <div className="mt-2 flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
+                          <div className="text-xs">
+                            <p className="text-orange-600 font-medium">{pinWarning}</p>
+                            {suggestedDistrict && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setManualDistrict(suggestedDistrict);
+                                  setPinWarning(null);
+                                  setSuggestedDistrict(null);
+                                }}
+                                className="text-tn-green hover:underline mt-1"
+                              >
+                                {language === 'en'
+                                  ? `Use ${suggestedDistrict} instead?`
+                                  : `${suggestedDistrict} பயன்படுத்தவா?`}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
