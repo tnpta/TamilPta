@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Check, School, Building, Users, FileText, CreditCard, AlertCircle, MapPin, Edit3 } from 'lucide-react';
 import AddressAutocomplete from '../components/AddressAutocomplete';
 import SchoolAutocomplete from '../components/SchoolAutocomplete';
+import DistrictAutocomplete from '../components/DistrictAutocomplete';
 import { schoolsData, getDistricts, getBlocksForDistrict, getSchoolsForBlock } from '../data/schoolsData';
 import BasicInfoForm from '../components/registration/BasicInfoForm';
 import TrustManagementForm from '../components/registration/TrustManagementForm';
@@ -303,7 +304,7 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
             <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
               <>
                 <div className="space-y-6">
-                  {/* School Name with Autocomplete */}
+                  {/* Row 1: School Name (full width) */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       {language === 'en' ? 'School Name' : 'பள்ளியின் பெயர்'} <span className="text-red-500">*</span>
@@ -330,21 +331,38 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                     />
                   </div>
 
-                  {/* District */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      {r.selectSchool.district} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={manualDistrict}
-                      onChange={(e) => setManualDistrict(e.target.value)}
-                      placeholder={language === 'en' ? 'Enter district name' : 'மாவட்டப் பெயரை உள்ளிடவும்'}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all"
-                    />
+                  {/* Row 2: District + PIN Code (side by side) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* District */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {r.selectSchool.district} <span className="text-red-500">*</span>
+                      </label>
+                      <DistrictAutocomplete
+                        value={manualDistrict}
+                        onChange={setManualDistrict}
+                        placeholder={language === 'en' ? 'Select district' : 'மாவட்டத்தைத் தேர்ந்தெடுக்கவும்'}
+                        language={language}
+                      />
+                    </div>
+
+                    {/* Pincode */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {language === 'en' ? 'PIN Code' : 'அஞ்சல் குறியீடு'}
+                      </label>
+                      <input
+                        type="text"
+                        value={manualPincode}
+                        onChange={(e) => setManualPincode(e.target.value)}
+                        placeholder={language === 'en' ? 'Enter 6-digit PIN code' : '6 இலக்க அஞ்சல் குறியீட்டை உள்ளிடவும்'}
+                        maxLength={6}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all"
+                      />
+                    </div>
                   </div>
 
-                  {/* Full Address with Autocomplete */}
+                  {/* Row 3: Full Address (full width) */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       <MapPin className="inline mr-1" size={16} />
@@ -367,21 +385,6 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                         ? 'Start typing to search for address...'
                         : 'முகவரியைத் தேடத் தட்டச்சு செய்யத் தொடங்கவும்...'}
                       language={language}
-                    />
-                  </div>
-
-                  {/* Pincode */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      {language === 'en' ? 'PIN Code' : 'அஞ்சல் குறியீடு'}
-                    </label>
-                    <input
-                      type="text"
-                      value={manualPincode}
-                      onChange={(e) => setManualPincode(e.target.value)}
-                      placeholder={language === 'en' ? 'Enter 6-digit PIN code' : '6 இலக்க அஞ்சல் குறியீட்டை உள்ளிடவும்'}
-                      maxLength={6}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all"
                     />
                   </div>
 
