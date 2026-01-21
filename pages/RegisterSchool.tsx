@@ -162,7 +162,11 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{r.pageTitle}</h1>
-            <p className="text-gray-600">{r.pageSubtitle}</p>
+            <p className="text-gray-600">
+              {isManualEntry
+                ? (language === 'en' ? 'Enter your school details below' : 'கீழே உங்கள் பள்ளி விவரங்களை உள்ளிடவும்')
+                : r.pageSubtitle}
+            </p>
           </div>
 
           {!isManualEntry ? (
