@@ -29,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
   const isPtaHomePage = location.pathname === '/pta-home';
 
   const navLinks = [
-    { name: t.nav.home, href: isPtaHomePage ? '#home' : '/pta-home', isAnchor: isPtaHomePage },
+    { name: t.nav.home, href: '/', isAnchor: false },
     { name: t.nav.about, href: isPtaHomePage ? '#about' : '/pta-home#about', isAnchor: isPtaHomePage },
     { name: t.nav.parents, href: isPtaHomePage ? '#parents' : '/pta-home#parents', isAnchor: isPtaHomePage },
     { name: t.nav.teachers, href: isPtaHomePage ? '#teachers' : '/pta-home#teachers', isAnchor: isPtaHomePage },
@@ -58,18 +58,18 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
 
       {/* Main Header */}
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <Link to="/pta-home" className="flex items-center gap-3 group">
+        <Link to="/" className="flex items-center gap-3 group">
           <img
             src="/logo.png"
-            alt="Tamil PTA Logo"
+            alt="Department of School Education Logo"
             className="h-14 w-auto object-contain transition-transform group-hover:scale-105"
           />
           <div className="flex flex-col">
             <h1 className="text-xl md:text-2xl font-bold text-tn-green leading-tight">
-              {language === 'en' ? 'Tamil PTA' : 'தமிழ் பி.டி.ஏ'}
+              {language === 'en' ? 'Department of School Education' : 'பள்ளிக் கல்வித் துறை'}
             </h1>
             <span className="text-xs text-gray-500 hidden md:block font-medium">
-              {language === 'en' ? 'Tamilnadu State Parent Teachers Association' : 'தமிழ்நாடு மாநில பெற்றோர் ஆசிரியர் சங்கம்'}
+              {language === 'en' ? 'Government of Tamil Nadu' : 'தமிழ்நாடு அரசு'}
             </span>
           </div>
         </Link>
