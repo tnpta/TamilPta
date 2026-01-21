@@ -26,15 +26,15 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
     setLanguage(language === 'en' ? 'ta' : 'en');
   };
 
-  const isHomePage = location.pathname === '/';
+  const isPtaHomePage = location.pathname === '/pta-home';
 
   const navLinks = [
-    { name: t.nav.home, href: isHomePage ? '#home' : '/', isAnchor: isHomePage },
-    { name: t.nav.about, href: isHomePage ? '#about' : '/#about', isAnchor: isHomePage },
-    { name: t.nav.parents, href: isHomePage ? '#parents' : '/#parents', isAnchor: isHomePage },
-    { name: t.nav.teachers, href: isHomePage ? '#teachers' : '/#teachers', isAnchor: isHomePage },
-    { name: t.nav.students, href: isHomePage ? '#students' : '/#students', isAnchor: isHomePage },
-    { name: t.nav.contact, href: isHomePage ? '#contact' : '/#contact', isAnchor: isHomePage },
+    { name: t.nav.home, href: isPtaHomePage ? '#home' : '/pta-home', isAnchor: isPtaHomePage },
+    { name: t.nav.about, href: isPtaHomePage ? '#about' : '/pta-home#about', isAnchor: isPtaHomePage },
+    { name: t.nav.parents, href: isPtaHomePage ? '#parents' : '/pta-home#parents', isAnchor: isPtaHomePage },
+    { name: t.nav.teachers, href: isPtaHomePage ? '#teachers' : '/pta-home#teachers', isAnchor: isPtaHomePage },
+    { name: t.nav.students, href: isPtaHomePage ? '#students' : '/pta-home#students', isAnchor: isPtaHomePage },
+    { name: t.nav.contact, href: isPtaHomePage ? '#contact' : '/pta-home#contact', isAnchor: isPtaHomePage },
   ];
 
   return (
@@ -58,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
 
       {/* Main Header */}
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <Link to="/" className="flex items-center gap-3 group">
+        <Link to="/pta-home" className="flex items-center gap-3 group">
           <img
             src="/logo.png"
             alt="Tamil PTA Logo"
@@ -98,7 +98,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
             ))}
           </nav>
           <Link
-            to="/register-school"
+            to="/"
             className="px-4 py-2 bg-tn-orange text-white rounded-lg font-semibold hover:bg-tn-orange/90 hover:shadow-lg transition-all text-sm"
           >
             {language === 'en' ? 'Register School' : 'பள்ளி பதிவு'}
@@ -155,7 +155,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
             )
           ))}
           <Link
-            to="/register-school"
+            to="/"
             onClick={() => setIsMobileMenuOpen(false)}
             className="mt-2 py-3 px-4 bg-tn-orange text-white text-center font-semibold rounded-lg hover:bg-tn-orange/90 transition-all"
           >
