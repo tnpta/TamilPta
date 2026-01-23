@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Check, School, Building, Users, FileText, CreditCard, AlertCircle, MapPin, Edit3 } from 'lucide-react';
-import AddressAutocomplete from '../components/AddressAutocomplete';
-import SchoolAutocomplete from '../components/SchoolAutocomplete';
-import DistrictAutocomplete from '../components/DistrictAutocomplete';
-import { schoolsData, getDistricts, getBlocksForDistrict, getSchoolsForBlock } from '../data/schoolsData';
-import { validatePinForDistrict, getDistrictForPin, isValidTamilNaduPin } from '../data/pinCodeData';
+import { ChevronLeft, ChevronRight, Check, School, Building, Users, FileText, CreditCard, AlertCircle, Shield, Landmark } from 'lucide-react';
 import BasicInfoForm from '../components/registration/BasicInfoForm';
 import TrustManagementForm from '../components/registration/TrustManagementForm';
 import StaffStudentsForm from '../components/registration/StaffStudentsForm';
@@ -18,24 +12,17 @@ interface RegisterSchoolProps {
 }
 
 const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
-  const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1); // Start directly at form step 1
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [selectedBlock, setSelectedBlock] = useState('');
-  const [selectedSchool, setSelectedSchool] = useState<{ id: number; name: string } | null>(null);
+  const [currentStep, setCurrentStep] = useState(0); // Start at mobile verification step
   const [formData, setFormData] = useState<any>({});
   const [referenceNumber, setReferenceNumber] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Manual entry states
-  const [isManualEntry, setIsManualEntry] = useState(false);
-  const [manualSchoolName, setManualSchoolName] = useState('');
-  const [manualAddress, setManualAddress] = useState('');
-  const [manualDistrict, setManualDistrict] = useState('');
-  const [manualPincode, setManualPincode] = useState('');
-  const [pinWarning, setPinWarning] = useState<string | null>(null);
-  const [suggestedDistrict, setSuggestedDistrict] = useState<string | null>(null);
-  const [expectedPinRange, setExpectedPinRange] = useState<string | null>(null);
+  // Mobile verification states
+  const [verificationMobile, setVerificationMobile] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [mobileVerified, setMobileVerified] = useState(false);
+  const [mobileError, setMobileError] = useState('');
 
   const r = t.registration;
   const language = t.nav.home === 'Home' ? 'en' : 'ta';
@@ -47,55 +34,6 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
     { id: 4, name: r.steps.infrastructure, icon: FileText },
     { id: 5, name: r.steps.feesOthers, icon: CreditCard },
   ];
-
-  const districts = getDistricts();
-  const blocks = selectedDistrict ? getBlocksForDistrict(selectedDistrict) : [];
-  const schools = selectedDistrict && selectedBlock ? getSchoolsForBlock(selectedDistrict, selectedBlock) : [];
-
-  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedDistrict(e.target.value);
-    setSelectedBlock('');
-    setSelectedSchool(null);
-  };
-
-  const handleBlockChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedBlock(e.target.value);
-    setSelectedSchool(null);
-  };
-
-  const handleSchoolChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const schoolId = parseInt(e.target.value);
-    const school = schools.find(s => s.id === schoolId);
-    setSelectedSchool(school || null);
-  };
-
-  const handleProceed = () => {
-    if (selectedSchool) {
-      setFormData({
-        ...formData,
-        district: selectedDistrict,
-        block: selectedBlock,
-        schoolId: selectedSchool.id,
-        schoolName: selectedSchool.name,
-        isManualEntry: false,
-      });
-      setCurrentStep(1);
-    }
-  };
-
-  const handleManualProceed = () => {
-    if (manualSchoolName && manualAddress && manualDistrict) {
-      setFormData({
-        ...formData,
-        district: manualDistrict,
-        schoolName: manualSchoolName,
-        manualAddress: manualAddress,
-        manualPincode: manualPincode,
-        isManualEntry: true,
-      });
-      setCurrentStep(1);
-    }
-  };
 
   const isValidMobileNumber = (mobile: string) => {
     return mobile && mobile.length === 10 && /^\d{10}$/.test(mobile);
@@ -142,14 +80,40 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
   };
 
   const handleSubmit = () => {
-    // Use mobile number as reference
-    const mobileRef = formData.correspondentMobile || formData.principalMobile || formData.schoolMobile || 'N/A';
-    setReferenceNumber(mobileRef);
+    // Use verified mobile number as reference
+    setReferenceNumber(verificationMobile);
     setIsSubmitted(true);
-    console.log('Form submitted:', { ...formData, referenceNumber: mobileRef });
+    console.log('Form submitted:', { ...formData, referenceNumber: verificationMobile });
   };
 
-  const canProceedManual = manualSchoolName.trim() && manualAddress.trim() && manualDistrict.trim();
+  // Handle mobile number input for verification
+  const handleVerificationMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setVerificationMobile(value);
+    setMobileError('');
+  };
+
+  // Send OTP
+  const handleSendOtp = () => {
+    if (verificationMobile.length !== 10) {
+      setMobileError(language === 'en' ? 'Please enter a valid 10-digit mobile number' : 'சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்');
+      return;
+    }
+    setOtpSent(true);
+  };
+
+  // Verify OTP and proceed
+  const handleVerifyOtp = () => {
+    // For now, accept any OTP or empty OTP
+    setMobileVerified(true);
+    // Auto-fill the mobile number in form data
+    setFormData({
+      ...formData,
+      schoolMobile: verificationMobile,
+      correspondentMobile: verificationMobile,
+    });
+    setCurrentStep(1); // Move to registration form
+  };
 
   // Success Screen
   if (isSubmitted) {
@@ -183,346 +147,114 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
     );
   }
 
-  // School Selection Screen
+  // Mobile Verification Screen
   if (currentStep === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pt-32 pb-16">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{r.pageTitle}</h1>
-            <p className="text-gray-600">
-              {isManualEntry
-                ? (language === 'en' ? 'Enter your school details below' : 'கீழே உங்கள் பள்ளி விவரங்களை உள்ளிடவும்')
-                : r.pageSubtitle}
-            </p>
-          </div>
-
-          {!isManualEntry ? (
-            <>
-              {/* Two Column Layout - Dropdown + Manual Entry Option */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column - Dropdown Selection */}
-                <div className="bg-white rounded-2xl shadow-xl p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-tn-green/10 rounded-full p-2">
-                      <School className="text-tn-green" size={24} />
-                    </div>
-                    <h2 className="text-lg font-bold text-gray-800">
-                      {language === 'en' ? 'Select Your School' : 'உங்கள் பள்ளியைத் தேர்ந்தெடுக்கவும்'}
-                    </h2>
-                  </div>
-
-                  <div className="space-y-5">
-                    {/* District */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {r.selectSchool.district} <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={selectedDistrict}
-                        onChange={handleDistrictChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all"
-                      >
-                        <option value="">{r.selectSchool.selectDistrict}</option>
-                        {districts.map(district => (
-                          <option key={district} value={district}>{district}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Block */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {r.selectSchool.block} <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={selectedBlock}
-                        onChange={handleBlockChange}
-                        disabled={!selectedDistrict}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      >
-                        <option value="">{r.selectSchool.selectBlock}</option>
-                        {blocks.map(block => (
-                          <option key={block} value={block}>{block}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* School */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {r.selectSchool.school} <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={selectedSchool?.id || ''}
-                        onChange={handleSchoolChange}
-                        disabled={!selectedBlock}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      >
-                        <option value="">{r.selectSchool.selectSchool}</option>
-                        {schools.map(school => (
-                          <option key={school.id} value={school.id}>{school.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {selectedSchool && (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p className="text-sm text-green-800">
-                          <span className="font-semibold">{r.selectSchool.selectedSchool}</span> {selectedSchool.name}
-                        </p>
-                        <p className="text-sm text-green-700 mt-1">
-                          {selectedBlock}, {selectedDistrict}
-                        </p>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={handleProceed}
-                      disabled={!selectedSchool}
-                      className="w-full py-4 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {r.selectSchool.proceed}
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Right Column - Manual Entry Option */}
-                <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-xl p-8 text-white flex flex-col">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-white/20 rounded-full p-3">
-                      <AlertCircle size={28} />
-                    </div>
-                    <h2 className="text-xl font-bold">
-                      {language === 'en' ? "Can't find your school?" : 'உங்கள் பள்ளி கிடைக்கவில்லையா?'}
-                    </h2>
-                  </div>
-
-                  <p className="text-white/90 mb-6 flex-grow">
-                    {language === 'en'
-                      ? "If your school is not listed in the dropdown menu, don't worry! You can enter your school details manually by clicking the button below."
-                      : "கீழ்தோன்றும் பட்டியலில் உங்கள் பள்ளி இல்லையென்றால், கவலைப்பட வேண்டாம்! கீழே உள்ள பொத்தானைக் கிளிக் செய்து உங்கள் பள்ளி விவரங்களை கைமுறையாக உள்ளிடலாம்."}
-                  </p>
-
-                  <div className="bg-white/10 rounded-xl p-4 mb-6">
-                    <h4 className="font-semibold mb-2">
-                      {language === 'en' ? 'You will need to provide:' : 'நீங்கள் வழங்க வேண்டியவை:'}
-                    </h4>
-                    <ul className="text-sm text-white/90 space-y-1">
-                      <li>• {language === 'en' ? 'School Name' : 'பள்ளியின் பெயர்'}</li>
-                      <li>• {language === 'en' ? 'District' : 'மாவட்டம்'}</li>
-                      <li>• {language === 'en' ? 'Full Address' : 'முழு முகவரி'}</li>
-                      <li>• {language === 'en' ? 'PIN Code' : 'அஞ்சல் குறியீடு'}</li>
-                    </ul>
-                  </div>
-
-                  <button
-                    onClick={() => setIsManualEntry(true)}
-                    className="w-full bg-white text-orange-600 px-6 py-4 rounded-lg font-bold hover:bg-orange-50 transition-all flex items-center justify-center gap-2 shadow-lg"
-                  >
-                    <Edit3 size={20} />
-                    {language === 'en' ? 'Enter School Details Manually' : 'பள்ளி விவரங்களை கைமுறையாக உள்ளிடவும்'}
-                  </button>
-                </div>
+        <div className="container mx-auto px-4 max-w-md">
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-tn-green/20 to-tn-blue/20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Landmark className="w-10 h-10 text-tn-green" />
               </div>
-            </>
-          ) : (
-            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
-              <>
-                <div className="space-y-6">
-                  {/* Row 1: School Name (full width) */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      {language === 'en' ? 'School Name' : 'பள்ளியின் பெயர்'} <span className="text-red-500">*</span>
-                    </label>
-                    <SchoolAutocomplete
-                      value={manualSchoolName}
-                      onChange={setManualSchoolName}
-                      onSelect={(suggestion) => {
-                        // Auto-fill address from school suggestion
-                        setManualAddress(suggestion.display_name);
-                        // Auto-fill district from school suggestion
-                        if (suggestion.address?.state_district) {
-                          setManualDistrict(suggestion.address.state_district);
-                        }
-                        // Auto-fill pincode from school suggestion
-                        if (suggestion.address?.postcode) {
-                          setManualPincode(suggestion.address.postcode);
-                        }
-                      }}
-                      placeholder={language === 'en'
-                        ? 'Start typing to search for school...'
-                        : 'பள்ளியைத் தேடத் தட்டச்சு செய்யத் தொடங்கவும்...'}
-                      language={language}
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                {language === 'en' ? 'Register your School' : 'உங்கள் பள்ளியைப் பதிவு செய்யுங்கள்'}
+              </h1>
+              <p className="text-gray-600 text-sm">
+                {language === 'en'
+                  ? 'Enter your mobile number to start registration'
+                  : 'பதிவைத் தொடங்க உங்கள் மொபைல் எண்ணை உள்ளிடவும்'}
+              </p>
+            </div>
+
+            {!otpSent ? (
+              // Step 1: Enter Mobile Number
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {language === 'en' ? 'Mobile Number' : 'மொபைல் எண்'} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">+91</span>
+                    <input
+                      type="tel"
+                      value={verificationMobile}
+                      onChange={handleVerificationMobileChange}
+                      maxLength={10}
+                      className={`w-full pl-14 pr-4 py-4 border rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent text-lg tracking-wider ${
+                        mobileError ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="9876543210"
                     />
                   </div>
-
-                  {/* Row 2: District + PIN Code (side by side) */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* District */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {r.selectSchool.district} <span className="text-red-500">*</span>
-                      </label>
-                      <DistrictAutocomplete
-                        value={manualDistrict}
-                        onChange={setManualDistrict}
-                        placeholder={language === 'en' ? 'Select district' : 'மாவட்டத்தைத் தேர்ந்தெடுக்கவும்'}
-                        language={language}
-                      />
-                    </div>
-
-                    {/* Pincode */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {language === 'en' ? 'PIN Code' : 'அஞ்சல் குறியீடு'}
-                      </label>
-                      <input
-                        type="text"
-                        value={manualPincode}
-                        onChange={(e) => {
-                          const pin = e.target.value.replace(/\D/g, ''); // Only digits
-                          setManualPincode(pin);
-
-                          // Validate as user types
-                          if (pin.length > 0 && !pin.startsWith('6')) {
-                            // Tamil Nadu PIN codes must start with 6
-                            setPinWarning(language === 'en'
-                              ? 'Tamil Nadu PIN codes start with 6'
-                              : 'தமிழ்நாடு அஞ்சல் குறியீடுகள் 6 இல் தொடங்கும்');
-                            setSuggestedDistrict(null);
-                          } else if (pin.length === 6) {
-                            // Full PIN entered - validate against district
-                            const validation = validatePinForDistrict(pin, manualDistrict);
-                            if (!validation.isValid && validation.message) {
-                              setPinWarning(validation.message);
-                              setSuggestedDistrict(validation.suggestedDistrict);
-                              setExpectedPinRange(validation.expectedRange);
-                            } else {
-                              setPinWarning(null);
-                              setSuggestedDistrict(null);
-                              setExpectedPinRange(null);
-                              // Auto-fill district if empty
-                              if (!manualDistrict) {
-                                const detected = getDistrictForPin(pin);
-                                if (detected) {
-                                  setManualDistrict(detected);
-                                }
-                              }
-                            }
-                          } else {
-                            setPinWarning(null);
-                            setSuggestedDistrict(null);
-                            setExpectedPinRange(null);
-                          }
-                        }}
-                        onBlur={() => {
-                          // Validate on blur if PIN is incomplete
-                          if (manualPincode.length > 0 && manualPincode.length < 6) {
-                            setPinWarning(language === 'en'
-                              ? 'PIN code must be 6 digits'
-                              : 'அஞ்சல் குறியீடு 6 இலக்கங்களாக இருக்க வேண்டும்');
-                          }
-                        }}
-                        placeholder={language === 'en' ? 'Enter 6-digit PIN code' : '6 இலக்க அஞ்சல் குறியீட்டை உள்ளிடவும்'}
-                        maxLength={6}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent transition-all ${
-                          pinWarning ? 'border-red-400 bg-red-50' : 'border-gray-300'
-                        }`}
-                      />
-                      {pinWarning && (
-                        <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-2">
-                          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                          <div className="text-xs">
-                            <p className="text-red-600 font-medium">{pinWarning}</p>
-                            {expectedPinRange && (
-                              <p className="text-gray-600 mt-1">
-                                {language === 'en'
-                                  ? `Expected PIN range: ${expectedPinRange}`
-                                  : `எதிர்பார்க்கப்படும் அஞ்சல் குறியீடு: ${expectedPinRange}`}
-                              </p>
-                            )}
-                            {suggestedDistrict && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setManualDistrict(suggestedDistrict);
-                                  setPinWarning(null);
-                                  setSuggestedDistrict(null);
-                                  setExpectedPinRange(null);
-                                }}
-                                className="text-tn-green font-semibold hover:underline mt-1"
-                              >
-                                {language === 'en'
-                                  ? `Click to use ${suggestedDistrict}`
-                                  : `${suggestedDistrict} பயன்படுத்த கிளிக் செய்யவும்`}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Row 3: Full Address (full width) */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      <MapPin className="inline mr-1" size={16} />
-                      {language === 'en' ? 'Full Address' : 'முழு முகவரி'} <span className="text-red-500">*</span>
-                    </label>
-                    <AddressAutocomplete
-                      value={manualAddress}
-                      onChange={setManualAddress}
-                      onSelect={(suggestion) => {
-                        // Auto-fill district from address suggestion
-                        if (suggestion.address?.state_district) {
-                          setManualDistrict(suggestion.address.state_district);
-                        }
-                        // Auto-fill pincode from address suggestion
-                        if (suggestion.address?.postcode) {
-                          setManualPincode(suggestion.address.postcode);
-                        }
-                      }}
-                      placeholder={language === 'en'
-                        ? 'Start typing to search for address...'
-                        : 'முகவரியைத் தேடத் தட்டச்சு செய்யத் தொடங்கவும்...'}
-                      language={language}
-                    />
-                  </div>
-
-                  {canProceedManual && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <p className="text-sm text-green-800">
-                        <span className="font-semibold">{r.selectSchool.selectedSchool}</span> {manualSchoolName}
-                      </p>
-                      <p className="text-sm text-green-700 mt-1">
-                        {manualAddress}, {manualDistrict} {manualPincode && `- ${manualPincode}`}
-                      </p>
+                  {mobileError && (
+                    <div className="flex items-center gap-1 mt-2 text-red-600 text-sm">
+                      <AlertCircle size={14} />
+                      <span>{mobileError}</span>
                     </div>
                   )}
-
-                  <button
-                    onClick={handleManualProceed}
-                    disabled={!canProceedManual}
-                    className="w-full py-4 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {r.selectSchool.proceed}
-                    <ChevronRight size={20} />
-                  </button>
-
-                  {/* Back to Dropdown Selection */}
-                  <button
-                    onClick={() => setIsManualEntry(false)}
-                    className="w-full py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-                  >
-                    <ChevronLeft size={18} />
-                    {language === 'en' ? 'Back to School Selection' : 'பள்ளி தேர்வுக்குத் திரும்பு'}
-                  </button>
                 </div>
-              </>
-            </div>
-          )}
+
+                <button
+                  onClick={handleSendOtp}
+                  disabled={verificationMobile.length !== 10}
+                  className="w-full py-4 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {language === 'en' ? 'Send OTP' : 'OTP அனுப்பு'}
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            ) : (
+              // Step 2: Enter OTP
+              <div className="space-y-6">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-green-800">
+                    {language === 'en'
+                      ? `OTP sent to +91 ${verificationMobile}`
+                      : `+91 ${verificationMobile} க்கு OTP அனுப்பப்பட்டது`}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {language === 'en' ? 'Enter OTP' : 'OTP உள்ளிடவும்'}
+                  </label>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
+                    className="w-full px-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent text-center text-2xl tracking-[0.5em] font-mono"
+                    placeholder="------"
+                  />
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    {language === 'en'
+                      ? '(Leave blank to skip OTP verification for now)'
+                      : '(தற்போது OTP சரிபார்ப்பைத் தவிர்க்க காலியாக விடவும்)'}
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleVerifyOtp}
+                  className="w-full py-4 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <Shield size={20} />
+                  {language === 'en' ? 'Verify & Continue' : 'சரிபார்த்து தொடரவும்'}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setOtpSent(false);
+                    setOtp('');
+                  }}
+                  className="w-full py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                >
+                  <ChevronLeft size={18} />
+                  {language === 'en' ? 'Change Mobile Number' : 'மொபைல் எண்ணை மாற்று'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -536,11 +268,6 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
         <div className="text-center mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{r.formTitle}</h1>
           <p className="text-gray-600 text-sm">{formData.schoolName}</p>
-          {formData.isManualEntry && (
-            <span className="inline-block mt-2 px-3 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
-              {language === 'en' ? 'Manual Entry' : 'கைமுறை உள்ளீடு'}
-            </span>
-          )}
         </div>
 
         {/* Stepper */}
