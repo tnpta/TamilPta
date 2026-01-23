@@ -1,13 +1,15 @@
 import React from 'react';
+import { Upload } from 'lucide-react';
 import { RegistrationTranslations } from '../../types';
 
 interface TrustManagementFormProps {
   formData: any;
   updateFormData: (data: any) => void;
   t: RegistrationTranslations;
+  language: 'en' | 'ta';
 }
 
-const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, updateFormData, t }) => {
+const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, updateFormData, t, language }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     updateFormData({ [name]: value });
@@ -29,13 +31,22 @@ const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, upd
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {tm.trustName}
             </label>
-            <input
-              type="text"
-              name="trustName"
-              value={formData.trustName || ''}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
+            <div className="flex gap-3">
+              <input
+                type="text"
+                name="trustName"
+                value={formData.trustName || ''}
+                onChange={handleChange}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+              />
+              <button
+                type="button"
+                className="px-4 py-2.5 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2 whitespace-nowrap"
+              >
+                <Upload size={18} />
+                {language === 'en' ? 'Upload Documents' : 'ஆவணங்களைப் பதிவேற்றவும்'}
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -292,6 +303,13 @@ const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, upd
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
             placeholder="Enter details of additional classes opened..."
           />
+          <button
+            type="button"
+            className="mt-2 px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2"
+          >
+            <Upload size={18} />
+            {language === 'en' ? 'Upload Order Copy' : 'ஆணை நகலைப் பதிவேற்றவும்'}
+          </button>
         </div>
 
         <div className="mb-6">
@@ -306,6 +324,13 @@ const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, upd
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
             placeholder="Enter latest renewal details..."
           />
+          <button
+            type="button"
+            className="mt-2 px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2"
+          >
+            <Upload size={18} />
+            {language === 'en' ? 'Upload Order Copy' : 'ஆணை நகலைப் பதிவேற்றவும்'}
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

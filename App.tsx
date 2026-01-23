@@ -28,7 +28,7 @@ const App: React.FC = () => {
             <Route path="/pta-home" element={<PtaHome t={t} />} />
           </Routes>
         </main>
-        <Footer t={t} />
+        <Footer />
       </div>
     </Router>
   );

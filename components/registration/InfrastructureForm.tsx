@@ -1,13 +1,15 @@
 import React from 'react';
+import { Upload, Camera } from 'lucide-react';
 import { RegistrationTranslations } from '../../types';
 
 interface InfrastructureFormProps {
   formData: any;
   updateFormData: (data: any) => void;
   t: RegistrationTranslations;
+  language: 'en' | 'ta';
 }
 
-const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updateFormData, t }) => {
+const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updateFormData, t, language }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     updateFormData({ [name]: value });
@@ -229,6 +231,13 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
                 onChange={(e) => handleBuildingChange(blockIndex, 'approvalDetails', e.target.value)}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
               />
+              <button
+                type="button"
+                className="mt-2 px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2"
+              >
+                <Upload size={18} />
+                {language === 'en' ? 'Upload Order Copy' : 'ஆணை நகலைப் பதிவேற்றவும்'}
+              </button>
             </div>
           </div>
         ))}
@@ -299,6 +308,13 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
               onChange={handleChange}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
             />
+            <button
+              type="button"
+              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <Camera size={18} />
+              {language === 'en' ? 'Upload Photo' : 'புகைப்படம் பதிவேற்றவும்'}
+            </button>
           </div>
         </div>
 
@@ -313,6 +329,13 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
               min="0"
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
             />
+            <button
+              type="button"
+              className="mt-2 w-full px-2 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm"
+            >
+              <Camera size={16} />
+              {language === 'en' ? 'Photo' : 'புகைப்படம்'}
+            </button>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{inf.toiletsGirls}</label>
@@ -324,6 +347,13 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
               min="0"
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
             />
+            <button
+              type="button"
+              className="mt-2 w-full px-2 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm"
+            >
+              <Camera size={16} />
+              {language === 'en' ? 'Photo' : 'புகைப்படம்'}
+            </button>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{inf.drinkingWaterTaps}</label>
@@ -335,6 +365,13 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
               min="0"
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
             />
+            <button
+              type="button"
+              className="mt-2 w-full px-2 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm"
+            >
+              <Camera size={16} />
+              {language === 'en' ? 'Photo' : 'புகைப்படம்'}
+            </button>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{inf.handWashTaps}</label>
@@ -346,6 +383,13 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
               min="0"
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
             />
+            <button
+              type="button"
+              className="mt-2 w-full px-2 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm"
+            >
+              <Camera size={16} />
+              {language === 'en' ? 'Photo' : 'புகைப்படம்'}
+            </button>
           </div>
         </div>
 
@@ -384,6 +428,13 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
                   onChange={handleChange}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
                 />
+                <button
+                  type="button"
+                  className="mt-2 px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2"
+                >
+                  <Upload size={18} />
+                  {language === 'en' ? 'Upload Document' : 'ஆவணம் பதிவேற்றவும்'}
+                </button>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{inf.dateAuthority}</label>
@@ -421,6 +472,13 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
                   onChange={handleChange}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
                 />
+                <button
+                  type="button"
+                  className="mt-2 px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2"
+                >
+                  <Upload size={18} />
+                  {language === 'en' ? 'Upload Document' : 'ஆவணம் பதிவேற்றவும்'}
+                </button>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{inf.dateAuthority}</label>
@@ -458,6 +516,13 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
                   onChange={handleChange}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
                 />
+                <button
+                  type="button"
+                  className="mt-2 px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2"
+                >
+                  <Upload size={18} />
+                  {language === 'en' ? 'Upload Document' : 'ஆவணம் பதிவேற்றவும்'}
+                </button>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{inf.dateAuthority}</label>
@@ -485,6 +550,13 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
                   onChange={handleChange}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
                 />
+                <button
+                  type="button"
+                  className="mt-2 px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2"
+                >
+                  <Upload size={18} />
+                  {language === 'en' ? 'Upload Document' : 'ஆவணம் பதிவேற்றவும்'}
+                </button>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{inf.dateAuthority}</label>

@@ -1,15 +1,17 @@
 import React from 'react';
+import { Upload } from 'lucide-react';
 import { RegistrationTranslations } from '../../types';
 
 interface StaffStudentsFormProps {
   formData: any;
   updateFormData: (data: any) => void;
   t: RegistrationTranslations;
+  language: 'en' | 'ta';
 }
 
 const classes = ['Pre-KG', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
-const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateFormData, t }) => {
+const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateFormData, t, language }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     updateFormData({ [name]: value });
@@ -107,22 +109,11 @@ const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateF
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{ss.tetQualifiedMed}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">TET Qualified (Secondary Grade)</label>
             <input
               type="number"
-              name="teachingTETMEd"
-              value={formData.teachingTETMEd || ''}
-              onChange={handleChange}
-              min="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{ss.tetOnly}</label>
-            <input
-              type="number"
-              name="teachingTET"
-              value={formData.teachingTET || ''}
+              name="teachingTETSecondary"
+              value={formData.teachingTETSecondary || ''}
               onChange={handleChange}
               min="0"
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
@@ -279,8 +270,19 @@ const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateF
 
       {/* Class-wise Strength */}
       <div className="bg-purple-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">{ss.classWiseStrength}</h3>
-        <p className="text-sm text-gray-600 mb-4">{ss.emisNote}</p>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">{ss.classWiseStrength}</h3>
+            <p className="text-sm text-gray-600 mt-1">{ss.emisNote}</p>
+          </div>
+          <button
+            type="button"
+            className="px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2 whitespace-nowrap"
+          >
+            <Upload size={18} />
+            {language === 'en' ? 'Upload Documents' : 'ஆவணங்களைப் பதிவேற்றவும்'}
+          </button>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px]">
             <thead>

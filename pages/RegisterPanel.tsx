@@ -19,7 +19,7 @@ interface RegisterSchoolProps {
 
 const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1); // Start directly at form step 1
+  const [currentStep, setCurrentStep] = useState(0); // 0 = school selection, 1-5 = form steps
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedBlock, setSelectedBlock] = useState('');
   const [selectedSchool, setSelectedSchool] = useState<{ id: number; name: string } | null>(null);
@@ -97,27 +97,7 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
     }
   };
 
-  const isValidMobileNumber = (mobile: string) => {
-    return mobile && mobile.length === 10 && /^\d{10}$/.test(mobile);
-  };
-
-  const hasValidMobileNumber = () => {
-    return (
-      isValidMobileNumber(formData.schoolMobile) ||
-      isValidMobileNumber(formData.correspondentMobile) ||
-      isValidMobileNumber(formData.principalMobile)
-    );
-  };
-
-  const canProceedFromStep1 = currentStep === 1 ? hasValidMobileNumber() : true;
-
   const handleNext = () => {
-    if (currentStep === 1 && !hasValidMobileNumber()) {
-      alert(language === 'en'
-        ? 'Please enter a valid 10-digit mobile number to proceed.'
-        : 'தொடர செல்லுபடியாகும் 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்.');
-      return;
-    }
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     }
@@ -142,11 +122,10 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
   };
 
   const handleSubmit = () => {
-    // Use mobile number as reference
-    const mobileRef = formData.correspondentMobile || formData.principalMobile || formData.schoolMobile || 'N/A';
-    setReferenceNumber(mobileRef);
+    const refNum = generateReferenceNumber();
+    setReferenceNumber(refNum);
     setIsSubmitted(true);
-    console.log('Form submitted:', { ...formData, referenceNumber: mobileRef });
+    console.log('Form submitted:', { ...formData, referenceNumber: refNum });
   };
 
   const canProceedManual = manualSchoolName.trim() && manualAddress.trim() && manualDistrict.trim();
@@ -163,19 +142,17 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">{r.success.title}</h2>
             <p className="text-gray-600 mb-6">{r.success.message}</p>
             <div className="bg-gradient-to-r from-tn-green to-tn-blue p-6 rounded-xl text-white mb-6">
-              <p className="text-sm opacity-90 mb-2">
-                {language === 'en' ? 'Mobile Number' : 'மொபைல் எண்'}
-              </p>
+              <p className="text-sm opacity-90 mb-2">{r.success.referenceLabel}</p>
               <p className="text-3xl font-bold tracking-wider">{referenceNumber}</p>
             </div>
             <p className="text-sm text-gray-500 mb-8">
-              {language === 'en' ? 'Please save this mobile number for future reference.' : 'எதிர்கால குறிப்புக்காக இந்த மொபைல் எண்ணை சேமிக்கவும்.'}
+              {r.success.saveMessage}
             </p>
             <button
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/')}
               className="px-8 py-3 bg-tn-green text-white rounded-lg font-semibold hover:bg-tn-green/90 transition-colors"
             >
-              {language === 'en' ? 'Back to Home' : 'முகப்புக்குத் திரும்பு'}
+              {r.success.backHome}
             </button>
           </div>
         </div>
@@ -575,53 +552,38 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
 
         {/* Form Content */}
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-          {currentStep === 1 && <BasicInfoForm formData={formData} updateFormData={updateFormData} t={r} language={language} />}
-          {currentStep === 2 && <TrustManagementForm formData={formData} updateFormData={updateFormData} t={r} language={language} />}
-          {currentStep === 3 && <StaffStudentsForm formData={formData} updateFormData={updateFormData} t={r} language={language} />}
-          {currentStep === 4 && <InfrastructureForm formData={formData} updateFormData={updateFormData} t={r} language={language} />}
-          {currentStep === 5 && <FeesOtherForm formData={formData} updateFormData={updateFormData} t={r} language={language} />}
+          {currentStep === 1 && <BasicInfoForm formData={formData} updateFormData={updateFormData} t={r} />}
+          {currentStep === 2 && <TrustManagementForm formData={formData} updateFormData={updateFormData} t={r} />}
+          {currentStep === 3 && <StaffStudentsForm formData={formData} updateFormData={updateFormData} t={r} />}
+          {currentStep === 4 && <InfrastructureForm formData={formData} updateFormData={updateFormData} t={r} />}
+          {currentStep === 5 && <FeesOtherForm formData={formData} updateFormData={updateFormData} t={r} />}
 
           {/* Navigation */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            {currentStep === 1 && !hasValidMobileNumber() && (
-              <div className="mb-4 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-800">
-                  {language === 'en'
-                    ? 'Please enter at least one valid 10-digit mobile number (School, Correspondent, or Principal) to proceed to the next step.'
-                    : 'அடுத்த படிக்கு செல்ல குறைந்தபட்சம் ஒரு செல்லுபடியாகும் 10 இலக்க மொபைல் எண்ணை (பள்ளி, கடிதப்பொருத்துபவர் அல்லது முதல்வர்) உள்ளிடவும்.'}
-                </p>
-              </div>
-            )}
-            <div className="flex justify-between">
+          <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+            <button
+              onClick={handlePrevious}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <ChevronLeft size={18} />
+              {r.buttons.previous}
+            </button>
+            {currentStep < 5 ? (
               <button
-                onClick={handlePrevious}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+                onClick={handleNext}
+                className="px-6 py-3 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
               >
-                <ChevronLeft size={18} />
-                {r.buttons.previous}
+                {r.buttons.next}
+                <ChevronRight size={18} />
               </button>
-              {currentStep < 5 ? (
-                <button
-                  onClick={handleNext}
-                  disabled={!canProceedFromStep1}
-                  className={`px-6 py-3 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2 ${
-                    !canProceedFromStep1 ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  {r.buttons.next}
-                  <ChevronRight size={18} />
-                </button>
-              ) : (
-                <button
-                  onClick={handleSubmit}
-                  className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
-                >
-                  <Check size={18} />
-                  {r.buttons.submit}
-                </button>
-              )}
-            </div>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+              >
+                <Check size={18} />
+                {r.buttons.submit}
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -1,15 +1,17 @@
 import React from 'react';
+import { Upload } from 'lucide-react';
 import { RegistrationTranslations } from '../../types';
 
 interface FeesOtherFormProps {
   formData: any;
   updateFormData: (data: any) => void;
   t: RegistrationTranslations;
+  language: 'en' | 'ta';
 }
 
 const classGroups = ['PKG/LKG/UKG', 'I-III', 'IV-V', 'VI-VIII', 'IX-X', 'XI-XII'];
 
-const FeesOtherForm: React.FC<FeesOtherFormProps> = ({ formData, updateFormData, t }) => {
+const FeesOtherForm: React.FC<FeesOtherFormProps> = ({ formData, updateFormData, t, language }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     updateFormData({ [name]: value });
@@ -58,7 +60,7 @@ const FeesOtherForm: React.FC<FeesOtherFormProps> = ({ formData, updateFormData,
       {/* Fees Fixation */}
       <div className="bg-blue-50 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">{fo.feesFixation}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {fo.feesFixationOrder}
@@ -73,21 +75,13 @@ const FeesOtherForm: React.FC<FeesOtherFormProps> = ({ formData, updateFormData,
               <option value="Yes">{tm.yes}</option>
               <option value="No">{tm.no}</option>
             </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {fo.sufficientFeesFixation}
-            </label>
-            <select
-              name="sufficientFeesFixation"
-              value={formData.sufficientFeesFixation || ''}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+            <button
+              type="button"
+              className="mt-2 px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2"
             >
-              <option value="">{t.basicInfo.select}</option>
-              <option value="Yes">{tm.yes}</option>
-              <option value="No">{tm.no}</option>
-            </select>
+              <Upload size={18} />
+              {language === 'en' ? 'Upload Order Copy' : 'ஆணை நகலைப் பதிவேற்றவும்'}
+            </button>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
