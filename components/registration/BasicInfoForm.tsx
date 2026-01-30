@@ -10,13 +10,16 @@ interface BasicInfoFormProps {
 }
 
 const schoolTypes = [
+  'Play School',
   'N&P (Nursery & Primary)',
   'Matriculation',
-  'State Board SF',
+  'Self Finance',
   'CBSE',
-  'ICSE',
-  'IGCSE',
-  'IB'
+  'ICSE (CISCE)',
+  'IGCSE (CAIE)',
+  'IB',
+  'PEARSON/EDEXCEL',
+  'Others'
 ];
 
 const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ formData, updateFormData, t, language }) => {
@@ -49,12 +52,8 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ formData, updateFormData,
     }
   };
 
-  const handleCheckboxChange = (type: string) => {
-    const currentTypes = formData.schoolTypes || [];
-    const newTypes = currentTypes.includes(type)
-      ? currentTypes.filter((t: string) => t !== type)
-      : [...currentTypes, type];
-    updateFormData({ schoolTypes: newTypes });
+  const handleSchoolTypeChange = (type: string) => {
+    updateFormData({ schoolType: type });
   };
 
   const b = t.basicInfo;
@@ -77,7 +76,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ formData, updateFormData,
             value={formData.schoolCode || ''}
             onChange={handleChange}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            placeholder="Enter EMIS code"
+            placeholder="Enter UDISE Code"
           />
         </div>
         <div>
@@ -109,7 +108,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ formData, updateFormData,
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">{b.taluk}</label>
           <input
@@ -130,6 +129,22 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ formData, updateFormData,
             value={formData.localBody || ''}
             onChange={handleChange}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {language === 'en' ? 'District' : 'மாவட்டம்'}
+          </label>
+          <input
+            type="text"
+            name="district"
+            value={formData.district || ''}
+            onChange={handleChange}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+            placeholder={language === 'en' ? 'Enter district name' : 'மாவட்ட பெயரை உள்ளிடவும்'}
           />
         </div>
         <div>
@@ -199,23 +214,36 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ formData, updateFormData,
         <label className="block text-sm font-medium text-gray-700 mb-3">{b.schoolType}</label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {schoolTypes.map(type => (
-            <label key={type} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+            <label key={type} className={`flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer ${formData.schoolType === type ? 'border-tn-green bg-green-50' : 'border-gray-200'}`}>
               <input
-                type="checkbox"
-                checked={(formData.schoolTypes || []).includes(type)}
-                onChange={() => handleCheckboxChange(type)}
-                className="w-4 h-4 text-tn-green border-gray-300 rounded focus:ring-tn-green"
+                type="radio"
+                name="schoolType"
+                checked={formData.schoolType === type}
+                onChange={() => handleSchoolTypeChange(type)}
+                className="w-4 h-4 text-tn-green border-gray-300 focus:ring-tn-green"
               />
               <span className="text-sm text-gray-700">{type}</span>
             </label>
           ))}
         </div>
+        {formData.schoolType === 'Others' && (
+          <div className="mt-3">
+            <input
+              type="text"
+              name="schoolTypeOther"
+              value={formData.schoolTypeOther || ''}
+              onChange={handleChange}
+              className="w-full md:w-1/2 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+              placeholder={language === 'en' ? 'Please specify the school type' : 'பள்ளி வகையைக் குறிப்பிடவும்'}
+            />
+          </div>
+        )}
       </div>
 
       {/* Correspondent Details */}
       <div className="bg-blue-50 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">{b.correspondentDetails}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_3fr] gap-6 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{b.title_label}</label>
             <select
@@ -291,7 +319,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ formData, updateFormData,
       {/* Principal Details */}
       <div className="bg-green-50 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">{b.principalDetails}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_3fr] gap-6 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{b.title_label}</label>
             <select

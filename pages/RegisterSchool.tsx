@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Check, School, Building, Users, FileText, CreditCard, AlertCircle, Shield, Landmark } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Check, School, Building, Users, FileText, CreditCard, AlertCircle, Shield, Landmark, Loader2 } from 'lucide-react';
 import BasicInfoForm from '../components/registration/BasicInfoForm';
 import TrustManagementForm from '../components/registration/TrustManagementForm';
 import StaffStudentsForm from '../components/registration/StaffStudentsForm';
 import InfrastructureForm from '../components/registration/InfrastructureForm';
 import FeesOtherForm from '../components/registration/FeesOtherForm';
 import { TranslationContent } from '../types';
+import { checkSchoolExists, getSchoolFullData, submitForm, saveDraft } from '../utils/api';
+import { mapFormDataToBackend, mapBackendDataToForm } from '../utils/dataMapper';
 
 interface RegisterSchoolProps {
   t: TranslationContent;
@@ -23,6 +25,9 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
   const [otp, setOtp] = useState('');
   const [mobileVerified, setMobileVerified] = useState(false);
   const [mobileError, setMobileError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isExistingSchool, setIsExistingSchool] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const r = t.registration;
   const language = t.nav.home === 'Home' ? 'en' : 'ta';
@@ -49,18 +54,6 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
 
   const canProceedFromStep1 = currentStep === 1 ? hasValidMobileNumber() : true;
 
-  const handleNext = () => {
-    if (currentStep === 1 && !hasValidMobileNumber()) {
-      alert(language === 'en'
-        ? 'Please enter a valid 10-digit mobile number to proceed.'
-        : 'தொடர செல்லுபடியாகும் 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்.');
-      return;
-    }
-    if (currentStep < 5) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -79,11 +72,75 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
     return `TN-PTA-${year}-${random}`;
   };
 
-  const handleSubmit = () => {
-    // Use verified mobile number as reference
-    setReferenceNumber(verificationMobile);
-    setIsSubmitted(true);
-    console.log('Form submitted:', { ...formData, referenceNumber: verificationMobile });
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    
+    try {
+      console.log('[RegisterSchool] handleSubmit - formData keys:', Object.keys(formData));
+      console.log('[RegisterSchool] formData.buildings:', formData.buildings);
+      console.log('[RegisterSchool] formData.buildings type:', typeof formData.buildings);
+      console.log('[RegisterSchool] formData.buildings is array?', Array.isArray(formData.buildings));
+      console.log('[RegisterSchool] formData.buildings length:', formData.buildings?.length);
+      console.log('[RegisterSchool] formData.buildings[0]:', formData.buildings?.[0]);
+      console.log('[RegisterSchool] formData.buildingBlocks:', formData.buildingBlocks);
+      console.log('[RegisterSchool] formData.buildingBlocks length:', formData.buildingBlocks?.length);
+      console.log('[RegisterSchool] formData.stabilityNo:', formData.stabilityNo);
+      console.log('[RegisterSchool] formData.licenseNo:', formData.licenseNo);
+      console.log('[RegisterSchool] formData.fireNocNo:', formData.fireNocNo);
+      console.log('[RegisterSchool] formData.sanitaryNo:', formData.sanitaryNo);
+      console.log('[RegisterSchool] formData.certificates:', formData.certificates);
+      
+      // Map form data to backend format
+      const backendData = mapFormDataToBackend(formData, verificationMobile);
+      
+      console.log('[RegisterSchool] After mapping - backendData.infrastructure.blocks length:', backendData.infrastructure?.blocks?.length);
+      console.log('[RegisterSchool] After mapping - backendData.infrastructure.certificates length:', backendData.infrastructure?.certificates?.length);
+      console.log('[RegisterSchool] After mapping - backendData.infrastructure.blocks:', JSON.stringify(backendData.infrastructure?.blocks, null, 2));
+      console.log('[RegisterSchool] After mapping - backendData.infrastructure.certificates:', JSON.stringify(backendData.infrastructure?.certificates, null, 2));
+      
+      // Submit to backend
+      const response = await submitForm(verificationMobile, backendData);
+      
+      if (response.ok) {
+        setReferenceNumber(verificationMobile);
+        setIsSubmitted(true);
+      } else {
+        alert(language === 'en' 
+          ? `Failed to submit: ${response.error || 'Unknown error'}` 
+          : `சமர்ப்பிக்க முடியவில்லை: ${response.error || 'தெரியாத பிழை'}`);
+      }
+    } catch (error) {
+      alert(language === 'en' 
+        ? 'Network error. Please try again.' 
+        : 'நெட்வொர்க் பிழை. மீண்டும் முயற்சிக்கவும்.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Auto-save draft when moving between steps (optional)
+  const handleNextWithSave = async () => {
+    if (currentStep === 1 && !hasValidMobileNumber()) {
+      alert(language === 'en'
+        ? 'Please enter a valid 10-digit mobile number to proceed.'
+        : 'தொடர செல்லுபடியாகும் 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்.');
+      return;
+    }
+    
+    // Optionally save draft before moving to next step
+    if (verificationMobile && verificationMobile.length === 10 && currentStep > 0) {
+      try {
+        const backendData = mapFormDataToBackend(formData, verificationMobile);
+        await saveDraft(verificationMobile, backendData);
+      } catch (error) {
+        // Silently fail - draft save is optional
+        console.error('Draft save failed:', error);
+      }
+    }
+    
+    if (currentStep < 5) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   // Handle mobile number input for verification
@@ -93,26 +150,69 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
     setMobileError('');
   };
 
-  // Send OTP
-  const handleSendOtp = () => {
+  // Send OTP (dummy - just validates mobile and checks if school exists)
+  const handleSendOtp = async () => {
     if (verificationMobile.length !== 10) {
       setMobileError(language === 'en' ? 'Please enter a valid 10-digit mobile number' : 'சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்');
       return;
     }
-    setOtpSent(true);
+    
+    setIsLoading(true);
+    setMobileError('');
+    
+    try {
+      const response = await checkSchoolExists(verificationMobile);
+      if (response.ok) {
+        setIsExistingSchool(response.data?.isExisting || false);
+        setOtpSent(true);
+      } else {
+        setMobileError(response.error || (language === 'en' ? 'Failed to verify mobile number' : 'மொபைல் எண்ணை சரிபார்க்க முடியவில்லை'));
+      }
+    } catch (error) {
+      setMobileError(language === 'en' ? 'Network error. Please try again.' : 'நெட்வொர்க் பிழை. மீண்டும் முயற்சிக்கவும்.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Verify OTP and proceed
-  const handleVerifyOtp = () => {
-    // For now, accept any OTP or empty OTP
-    setMobileVerified(true);
-    // Auto-fill the mobile number in form data
-    setFormData({
-      ...formData,
-      schoolMobile: verificationMobile,
-      correspondentMobile: verificationMobile,
-    });
-    setCurrentStep(1); // Move to registration form
+  // Verify OTP and proceed (dummy - just continues)
+  const handleVerifyOtp = async () => {
+    setIsLoading(true);
+    setMobileError('');
+    
+    try {
+      // If existing school, fetch data
+      if (isExistingSchool) {
+        const response = await getSchoolFullData(verificationMobile);
+        if (response.ok && response.data) {
+          // Map backend data to form format
+          const mappedData = mapBackendDataToForm(response.data);
+          setFormData({
+            ...mappedData,
+            schoolMobile: verificationMobile,
+            correspondentMobile: mappedData.correspondentMobile || verificationMobile,
+          });
+        } else {
+          setMobileError(response.error || (language === 'en' ? 'Failed to load school data' : 'பள்ளி தரவை ஏற்ற முடியவில்லை'));
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // New school - just set mobile number
+        setFormData({
+          ...formData,
+          schoolMobile: verificationMobile,
+          correspondentMobile: verificationMobile,
+        });
+      }
+      
+      setMobileVerified(true);
+      setCurrentStep(1); // Move to registration form
+    } catch (error) {
+      setMobileError(language === 'en' ? 'Network error. Please try again.' : 'நெட்வொர்க் பிழை. மீண்டும் முயற்சிக்கவும்.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Success Screen
@@ -197,11 +297,20 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
 
                 <button
                   onClick={handleSendOtp}
-                  disabled={verificationMobile.length !== 10}
+                  disabled={verificationMobile.length !== 10 || isLoading}
                   className="w-full py-4 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {language === 'en' ? 'Send OTP' : 'OTP அனுப்பு'}
-                  <ChevronRight size={20} />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      {language === 'en' ? 'Checking...' : 'சரிபார்க்கிறது...'}
+                    </>
+                  ) : (
+                    <>
+                      {language === 'en' ? 'Validate OTP' : 'OTP சரிபார்க்க'}
+                      <ChevronRight size={20} />
+                    </>
+                  )}
                 </button>
               </div>
             ) : (
@@ -210,8 +319,12 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                   <p className="text-sm text-green-800">
                     {language === 'en'
-                      ? `OTP sent to +91 ${verificationMobile}`
-                      : `+91 ${verificationMobile} க்கு OTP அனுப்பப்பட்டது`}
+                      ? isExistingSchool 
+                        ? `School found for +91 ${verificationMobile}. Click continue to update details.`
+                        : `New school registration for +91 ${verificationMobile}. Click continue to register.`
+                      : isExistingSchool
+                        ? `+91 ${verificationMobile} க்கு பள்ளி கண்டறியப்பட்டது. விவரங்களை புதுப்பிக்க தொடரவும்.`
+                        : `+91 ${verificationMobile} க்கு புதிய பள்ளி பதிவு. பதிவு செய்ய தொடரவும்.`}
                   </p>
                 </div>
 
@@ -236,10 +349,20 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
 
                 <button
                   onClick={handleVerifyOtp}
-                  className="w-full py-4 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                  disabled={isLoading}
+                  className="w-full py-4 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  <Shield size={20} />
-                  {language === 'en' ? 'Verify & Continue' : 'சரிபார்த்து தொடரவும்'}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      {language === 'en' ? 'Loading...' : 'ஏற்றுகிறது...'}
+                    </>
+                  ) : (
+                    <>
+                      <Shield size={20} />
+                      {language === 'en' ? 'Continue' : 'தொடரவும்'}
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -266,8 +389,17 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
       <div className="container mx-auto px-4 max-w-5xl">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{r.formTitle}</h1>
-          <p className="text-gray-600 text-sm">{formData.schoolName}</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+            {isExistingSchool 
+              ? (language === 'en' ? 'Update School Details' : 'பள்ளி விவரங்களை புதுப்பிக்கவும்')
+              : r.formTitle}
+          </h1>
+          <p className="text-gray-600 text-sm">{formData.schoolName || verificationMobile}</p>
+          {isExistingSchool && (
+            <p className="text-sm text-blue-600 mt-1">
+              {language === 'en' ? 'Existing school data loaded' : 'இருக்கும் பள்ளி தரவு ஏற்றப்பட்டது'}
+            </p>
+          )}
         </div>
 
         {/* Stepper */}
@@ -330,7 +462,7 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
               </button>
               {currentStep < 5 ? (
                 <button
-                  onClick={handleNext}
+                  onClick={handleNextWithSave}
                   disabled={!canProceedFromStep1}
                   className={`px-6 py-3 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2 ${
                     !canProceedFromStep1 ? 'opacity-50 cursor-not-allowed' : ''
@@ -342,10 +474,22 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ t }) => {
               ) : (
                 <button
                   onClick={handleSubmit}
-                  className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                  disabled={isSubmitting}
+                  className={`px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2 ${
+                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
-                  <Check size={18} />
-                  {r.buttons.submit}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      {language === 'en' ? 'Submitting...' : 'சமர்ப்பிக்கிறது...'}
+                    </>
+                  ) : (
+                    <>
+                      <Check size={18} />
+                      {r.buttons.submit}
+                    </>
+                  )}
                 </button>
               )}
             </div>

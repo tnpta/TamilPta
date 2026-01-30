@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { RegistrationTranslations } from '../../types';
 
@@ -12,6 +12,11 @@ interface StaffStudentsFormProps {
 const classes = ['Pre-KG', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
 const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateFormData, t, language }) => {
+  const [uploadedDocuments, setUploadedDocuments] = useState<File | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string>('');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     updateFormData({ [name]: value });
@@ -28,6 +33,70 @@ const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateF
         }
       }
     });
+  };
+
+  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      try {
+        // Get mobile number from formData
+        const mobile = formData.schoolMobile || formData.correspondentMobile;
+        if (!mobile) {
+          alert('Please enter school mobile number first');
+          return;
+        }
+
+        const formDataUpload = new FormData();
+        formDataUpload.append('document', file);
+
+        const response = await fetch(`http://localhost:5001/api/uploads/${mobile}/document`, {
+          method: 'POST',
+          body: formDataUpload,
+        });
+
+        const result = await response.json();
+
+        if (result.ok) {
+          setUploadedDocuments(file);
+          setUploadSuccess(`Uploaded successfully: ${file.name}`);
+          
+          // Update EMIS path for all classes in classStrength
+          const classStrength = formData.classStrength || {};
+          const updatedClassStrength: any = {};
+          
+          // Set emisPath for all existing classes
+          classes.forEach((cls) => {
+            if (classStrength[cls]) {
+              updatedClassStrength[cls] = {
+                ...classStrength[cls],
+                emisPath: result.file.path
+              };
+            } else {
+              // Initialize with empty values but set emisPath
+              updatedClassStrength[cls] = {
+                boys: '',
+                girls: '',
+                rte: '',
+                emisPath: result.file.path
+              };
+            }
+          });
+          
+          updateFormData({
+            classStrength: updatedClassStrength,
+            classStrengthDocumentFile: result.file.filename,
+            classStrengthDocumentFilePath: result.file.path
+          });
+        } else {
+          alert('Upload failed: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert('Upload failed. Please try again.');
+      }
+    } else {
+      alert('Please select a PDF file.');
+    }
   };
 
   const ss = t.staffStudents;
@@ -125,7 +194,7 @@ const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateF
       {/* Supporting Staff */}
       <div className="bg-green-50 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">{ss.supportingStaff}</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{ss.officeStaff}</label>
             <input
@@ -154,28 +223,6 @@ const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateF
               type="number"
               name="supportLibrary"
               value={formData.supportLibrary || ''}
-              onChange={handleChange}
-              min="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{ss.drawing}</label>
-            <input
-              type="number"
-              name="supportDrawing"
-              value={formData.supportDrawing || ''}
-              onChange={handleChange}
-              min="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{ss.pet}</label>
-            <input
-              type="number"
-              name="supportPET"
-              value={formData.supportPET || ''}
               onChange={handleChange}
               min="0"
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
@@ -275,19 +322,31 @@ const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateF
             <h3 className="text-lg font-semibold text-gray-800">{ss.classWiseStrength}</h3>
             <p className="text-sm text-gray-600 mt-1">{ss.emisNote}</p>
           </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleDocumentUpload}
+            accept=".pdf"
+            style={{ display: 'none' }}
+          />
           <button
             type="button"
+            onClick={() => fileInputRef.current?.click()}
             className="px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2 whitespace-nowrap"
           >
             <Upload size={18} />
             {language === 'en' ? 'Upload Documents' : 'ஆவணங்களைப் பதிவேற்றவும்'}
           </button>
+          {uploadSuccess && (
+            <p className="text-green-600 text-sm mt-2">{uploadSuccess}</p>
+          )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px]">
             <thead>
               <tr className="bg-purple-100">
                 <th className="px-3 py-2 text-left text-sm font-semibold text-gray-700">{ss.class}</th>
+                <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700">{language === 'en' ? 'Sections' : 'பிரிவுகள்'}</th>
                 <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700">{ss.boys}</th>
                 <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700">{ss.girls}</th>
                 <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700">{ss.rte}</th>
@@ -297,6 +356,15 @@ const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateF
               {classes.map((cls, index) => (
                 <tr key={cls} className={index % 2 === 0 ? 'bg-white' : 'bg-purple-50/50'}>
                   <td className="px-3 py-2 text-sm font-medium text-gray-700">{cls}</td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.classStrength?.[cls]?.sections || ''}
+                      onChange={(e) => handleClassStrengthChange(cls, 'sections', e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-center text-sm focus:ring-2 focus:ring-tn-green focus:border-transparent"
+                    />
+                  </td>
                   <td className="px-3 py-2">
                     <input
                       type="number"

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { RegistrationTranslations } from '../../types';
 
@@ -9,47 +9,62 @@ interface FeesOtherFormProps {
   language: 'en' | 'ta';
 }
 
-const classGroups = ['PKG/LKG/UKG', 'I-III', 'IV-V', 'VI-VIII', 'IX-X', 'XI-XII'];
-
 const FeesOtherForm: React.FC<FeesOtherFormProps> = ({ formData, updateFormData, t, language }) => {
+  const [uploadMessage, setUploadMessage] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     updateFormData({ [name]: value });
   };
 
-  const handleExpenseChange = (category: string, classGroup: string, type: 'monthly' | 'yearly', value: string) => {
-    const expenses = formData.expenses || {};
-    updateFormData({
-      expenses: {
-        ...expenses,
-        [category]: {
-          ...(expenses[category] || {}),
-          [classGroup]: {
-            ...(expenses[category]?.[classGroup] || {}),
-            [type]: value
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const allowedTypes = ['application/pdf'];
+      if (allowedTypes.includes(file.type)) {
+        try {
+          const mobile = formData.schoolMobile || formData.correspondentMobile;
+          if (!mobile) {
+            setUploadMessage('Please enter school mobile number first');
+            return;
           }
+
+          const formDataUpload = new FormData();
+          formDataUpload.append('document', file);
+
+          const response = await fetch(`http://localhost:5001/api/uploads/${mobile}/document`, {
+            method: 'POST',
+            body: formDataUpload,
+          });
+
+          const result = await response.json();
+
+          if (result.ok) {
+            setUploadMessage(`Uploaded successfully: ${file.name}`);
+            updateFormData({
+              feesFixationOrderFile: result.file.filename,
+              feesFixationOrderPath: result.file.path
+            });
+          } else {
+            setUploadMessage('Upload failed: ' + result.error);
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          setUploadMessage('Upload failed. Please try again.');
         }
+      } else {
+        setUploadMessage('Only PDF files are allowed.');
       }
-    });
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   const fo = t.feesOthers;
   const tm = t.trustManagement;
-  const ec = fo.expenseCategories;
-
-  const expenseCategories = [
-    { key: 'teachingSalary', label: ec.teachingSalary },
-    { key: 'nonTeachingSalary', label: ec.nonTeachingSalary },
-    { key: 'ebBill', label: ec.ebBill },
-    { key: 'miscExpenses', label: ec.miscExpenses },
-    { key: 'transportExp', label: ec.transportExp },
-    { key: 'buildingMaintenance', label: ec.buildingMaintenance },
-    { key: 'booksPurchase', label: ec.booksPurchase },
-    { key: 'advertisement', label: ec.advertisement },
-    { key: 'propertyTax', label: ec.propertyTax },
-    { key: 'softwareDigital', label: ec.softwareDigital },
-    { key: 'otherExpenses', label: ec.otherExpenses },
-  ];
 
   return (
     <div className="space-y-8">
@@ -77,11 +92,24 @@ const FeesOtherForm: React.FC<FeesOtherFormProps> = ({ formData, updateFormData,
             </select>
             <button
               type="button"
+              onClick={handleUploadClick}
               className="mt-2 px-4 py-2 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2"
             >
               <Upload size={18} />
               {language === 'en' ? 'Upload Order Copy' : 'ஆணை நகலைப் பதிவேற்றவும்'}
             </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".pdf"
+              style={{ display: 'none' }}
+            />
+            {uploadMessage && (
+              <p className={`mt-2 text-sm ${uploadMessage.startsWith('Uploaded') ? 'text-green-600' : 'text-red-600'}`}>
+                {uploadMessage}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -114,69 +142,6 @@ const FeesOtherForm: React.FC<FeesOtherFormProps> = ({ formData, updateFormData,
             />
           </div>
         )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{fo.feesCollected}</label>
-            <input
-              type="text"
-              name="feesCollected"
-              value={formData.feesCollected || ''}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-              placeholder="Enter amount details"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{fo.feesFixedByCommittee}</label>
-            <input
-              type="text"
-              name="feesFixedByCommittee"
-              value={formData.feesFixedByCommittee || ''}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-              placeholder="Enter amount details"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Expense Details */}
-      <div className="bg-green-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">{fo.expenseDetails}</h3>
-        <p className="text-sm text-gray-600 mb-4">{fo.auditNote}</p>
-
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px] text-sm">
-            <thead>
-              <tr className="bg-green-100">
-                <th className="px-3 py-2 text-left font-semibold text-gray-700">{fo.expenseCategory}</th>
-                {classGroups.map(group => (
-                  <th key={group} className="px-3 py-2 text-center font-semibold text-gray-700">{group}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {expenseCategories.map((category, index) => (
-                <tr key={category.key} className={index % 2 === 0 ? 'bg-white' : 'bg-green-50/50'}>
-                  <td className="px-3 py-2 font-medium text-gray-700 text-xs">{category.label}</td>
-                  {classGroups.map(group => (
-                    <td key={group} className="px-2 py-1">
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.expenses?.[category.key]?.[group]?.monthly || ''}
-                        onChange={(e) => handleExpenseChange(category.key, group, 'monthly', e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-center text-xs focus:ring-1 focus:ring-tn-green focus:border-transparent"
-                        placeholder="Rs."
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
 
       {/* School Vehicles */}
@@ -222,37 +187,6 @@ const FeesOtherForm: React.FC<FeesOtherFormProps> = ({ formData, updateFormData,
       {/* Other Details */}
       <div className="bg-purple-50 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">{fo.otherDetails}</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {fo.lastYearAudit}
-            </label>
-            <select
-              name="lastYearAuditFiled"
-              value={formData.lastYearAuditFiled || ''}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            >
-              <option value="">{t.basicInfo.select}</option>
-              <option value="Yes">{tm.yes}</option>
-              <option value="No">{tm.no}</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {fo.last3YearsAudit}
-            </label>
-            <input
-              type="text"
-              name="last3YearsAudit"
-              value={formData.last3YearsAudit || ''}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-              placeholder="Enter details"
-            />
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>

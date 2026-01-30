@@ -55,7 +55,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
           />
           <div className="flex flex-col">
             <h1 className="text-xl md:text-2xl font-bold text-tn-green leading-tight">
-              {language === 'en' ? 'Directorates of Private Schools' : 'தனியார் பள்ளிகள் இயக்குநரகம்'}
+              {language === 'en' ? 'Directorate of Private Schools' : 'தனியார் பள்ளிகள் இயக்ககம்'}
             </h1>
             <span className="text-xs text-gray-500 hidden md:block font-medium">
               {language === 'en' ? 'Government of Tamil Nadu' : 'தமிழ்நாடு அரசு'}

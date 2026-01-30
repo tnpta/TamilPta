@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# Backend data and uploads
+backend/data/*.db
+backend/data/*.db-shm
+backend/data/*.db-wal
+backend/uploads/school_documents/*/
+backend/node_modules
+
+# tamilnaduSchoolReg reference folder
+tamilnaduSchoolReg
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

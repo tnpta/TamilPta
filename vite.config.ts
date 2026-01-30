@@ -6,8 +6,15 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       server: {
-        port: 3000,
-        host: '0.0.0.0',
+        port: 3001,
+        host: 'localhost',
+        proxy: {
+          '/api': {
+            target: 'http://localhost:5001',
+            changeOrigin: true,
+            // Don't rewrite - backend routes are already at /api/auth and /api/schools
+          },
+        },
       },
       plugins: [react()],
       define: {
