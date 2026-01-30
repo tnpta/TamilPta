@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, MapPin } from 'lucide-react';
 import { RegistrationTranslations } from '../../types';
+import { uploadDocument } from '../../utils/api';
 
 interface InfrastructureFormProps {
   formData: any;
@@ -101,45 +102,19 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
   const handleBlockOrderUpload = async (blockIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && (file.type === 'application/pdf' || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
-      try {
-        const mobile = formData.schoolMobile || formData.correspondentMobile;
-        if (!mobile) {
-          alert('Please enter school mobile number first');
-          return;
-        }
+      const mobile = formData.schoolMobile || formData.correspondentMobile;
+      if (!mobile) { alert('Please enter school mobile number first'); return; }
 
-        const formDataUpload = new FormData();
-        formDataUpload.append('document', file);
-
-        const response = await fetch(`http://localhost:5001/api/uploads/${mobile}/document`, {
-          method: 'POST',
-          body: formDataUpload,
-        });
-
-        const result = await response.json();
-
-        if (result.ok) {
-          const buildings = formData.buildings || [];
-          const newBuildings = [...buildings];
-          while (newBuildings.length <= blockIndex) {
-            newBuildings.push({});
-          }
-          newBuildings[blockIndex] = {
-            ...newBuildings[blockIndex],
-            approvalOrderCopyPath: result.file.path
-          };
-
-          updateFormData({ buildings: newBuildings });
-          setBlockUploadSuccess(prev => ({
-            ...prev,
-            [`block_${blockIndex}`]: `Uploaded successfully: ${file.name}`
-          }));
-        } else {
-          alert('Upload failed: ' + result.error);
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('Upload failed. Please try again.');
+      const result = await uploadDocument(mobile, file);
+      if (result.ok && result.data) {
+        const buildings = formData.buildings || [];
+        const newBuildings = [...buildings];
+        while (newBuildings.length <= blockIndex) { newBuildings.push({}); }
+        newBuildings[blockIndex] = { ...newBuildings[blockIndex], approvalOrderCopyPath: result.data.path };
+        updateFormData({ buildings: newBuildings });
+        setBlockUploadSuccess(prev => ({ ...prev, [`block_${blockIndex}`]: `Uploaded successfully: ${file.name}` }));
+      } else {
+        alert('Upload failed: ' + (result.error || 'Unknown error'));
       }
     } else {
       alert('Please select a PDF or Word document file.');
@@ -149,52 +124,24 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
   const handleFloorOrderUpload = async (blockIndex: number, floorIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && (file.type === 'application/pdf' || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
-      try {
-        const mobile = formData.schoolMobile || formData.correspondentMobile;
-        if (!mobile) {
-          alert('Please enter school mobile number first');
-          return;
-        }
+      const mobile = formData.schoolMobile || formData.correspondentMobile;
+      if (!mobile) { alert('Please enter school mobile number first'); return; }
 
-        const formDataUpload = new FormData();
-        formDataUpload.append('document', file);
-
-        const response = await fetch(`http://localhost:5001/api/uploads/${mobile}/document`, {
-          method: 'POST',
-          body: formDataUpload,
-        });
-
-        const result = await response.json();
-
-        if (result.ok) {
-          const buildings = formData.buildings || [];
-          const newBuildings = [...buildings];
-          while (newBuildings.length <= blockIndex) {
-            newBuildings.push({});
-          }
-          const block = { ...newBuildings[blockIndex] };
-          const floors = [...(block.floors || [])];
-          while (floors.length <= floorIndex) {
-            floors.push({});
-          }
-          floors[floorIndex] = {
-            ...floors[floorIndex],
-            approvalOrderCopyPath: result.file.path
-          };
-          block.floors = floors;
-          newBuildings[blockIndex] = block;
-
-          updateFormData({ buildings: newBuildings });
-          setBlockUploadSuccess(prev => ({
-            ...prev,
-            [`floor_${blockIndex}_${floorIndex}`]: `Uploaded successfully: ${file.name}`
-          }));
-        } else {
-          alert('Upload failed: ' + result.error);
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('Upload failed. Please try again.');
+      const result = await uploadDocument(mobile, file);
+      if (result.ok && result.data) {
+        const buildings = formData.buildings || [];
+        const newBuildings = [...buildings];
+        while (newBuildings.length <= blockIndex) { newBuildings.push({}); }
+        const block = { ...newBuildings[blockIndex] };
+        const floors = [...(block.floors || [])];
+        while (floors.length <= floorIndex) { floors.push({}); }
+        floors[floorIndex] = { ...floors[floorIndex], approvalOrderCopyPath: result.data.path };
+        block.floors = floors;
+        newBuildings[blockIndex] = block;
+        updateFormData({ buildings: newBuildings });
+        setBlockUploadSuccess(prev => ({ ...prev, [`floor_${blockIndex}_${floorIndex}`]: `Uploaded successfully: ${file.name}` }));
+      } else {
+        alert('Upload failed: ' + (result.error || 'Unknown error'));
       }
     } else {
       alert('Please select a PDF or Word document file.');
@@ -204,48 +151,28 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
   const handleDocumentUpload = async (type: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && (file.type === 'application/pdf' || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
-      try {
-        // Get mobile number from formData
-        const mobile = formData.schoolMobile || formData.correspondentMobile;
-        if (!mobile) {
-          alert('Please enter school mobile number first');
-          return;
+      const mobile = formData.schoolMobile || formData.correspondentMobile;
+      if (!mobile) { alert('Please enter school mobile number first'); return; }
+
+      const result = await uploadDocument(mobile, file);
+      if (result.ok && result.data) {
+        const updateData: any = {};
+        if (type === 'stability') {
+          updateData.stabilityDocumentPath = result.data.path;
+          setStabilityDocSuccess(`Uploaded successfully: ${file.name}`);
+        } else if (type === 'license') {
+          updateData.licenseDocumentPath = result.data.path;
+          setLicenseDocSuccess(`Uploaded successfully: ${file.name}`);
+        } else if (type === 'fireNoc') {
+          updateData.fireNocDocumentPath = result.data.path;
+          setFireNocDocSuccess(`Uploaded successfully: ${file.name}`);
+        } else if (type === 'sanitary') {
+          updateData.sanitaryDocumentPath = result.data.path;
+          setSanitaryDocSuccess(`Uploaded successfully: ${file.name}`);
         }
-
-        const formDataUpload = new FormData();
-        formDataUpload.append('document', file);
-
-        const response = await fetch(`http://localhost:5001/api/uploads/${mobile}/document`, {
-          method: 'POST',
-          body: formDataUpload,
-        });
-
-        const result = await response.json();
-
-        if (result.ok) {
-          // Update formData with the appropriate document path field
-          const updateData: any = {};
-          if (type === 'stability') {
-            updateData.stabilityDocumentPath = result.file.path;
-            setStabilityDocSuccess(`Uploaded successfully: ${file.name}`);
-          } else if (type === 'license') {
-            updateData.licenseDocumentPath = result.file.path;
-            setLicenseDocSuccess(`Uploaded successfully: ${file.name}`);
-          } else if (type === 'fireNoc') {
-            updateData.fireNocDocumentPath = result.file.path;
-            setFireNocDocSuccess(`Uploaded successfully: ${file.name}`);
-          } else if (type === 'sanitary') {
-            updateData.sanitaryDocumentPath = result.file.path;
-            setSanitaryDocSuccess(`Uploaded successfully: ${file.name}`);
-          }
-          
-          updateFormData(updateData);
-        } else {
-          alert('Upload failed: ' + result.error);
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('Upload failed. Please try again.');
+        updateFormData(updateData);
+      } else {
+        alert('Upload failed: ' + (result.error || 'Unknown error'));
       }
     } else {
       alert('Please select a PDF or Word document file.');

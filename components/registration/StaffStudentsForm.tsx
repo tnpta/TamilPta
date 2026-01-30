@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { RegistrationTranslations } from '../../types';
+import { uploadDocument } from '../../utils/api';
 
 interface StaffStudentsFormProps {
   formData: any;
@@ -38,61 +39,32 @@ const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateF
   const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf') {
-      try {
-        // Get mobile number from formData
-        const mobile = formData.schoolMobile || formData.correspondentMobile;
-        if (!mobile) {
-          alert('Please enter school mobile number first');
-          return;
-        }
+      const mobile = formData.schoolMobile || formData.correspondentMobile;
+      if (!mobile) { alert('Please enter school mobile number first'); return; }
 
-        const formDataUpload = new FormData();
-        formDataUpload.append('document', file);
+      const result = await uploadDocument(mobile, file);
+      if (result.ok && result.data) {
+        setUploadedDocuments(file);
+        setUploadSuccess(`Uploaded successfully: ${file.name}`);
 
-        const response = await fetch(`http://localhost:5001/api/uploads/${mobile}/document`, {
-          method: 'POST',
-          body: formDataUpload,
+        const classStrength = formData.classStrength || {};
+        const updatedClassStrength: any = {};
+
+        classes.forEach((cls) => {
+          if (classStrength[cls]) {
+            updatedClassStrength[cls] = { ...classStrength[cls], emisPath: result.data!.path };
+          } else {
+            updatedClassStrength[cls] = { boys: '', girls: '', rte: '', emisPath: result.data!.path };
+          }
         });
 
-        const result = await response.json();
-
-        if (result.ok) {
-          setUploadedDocuments(file);
-          setUploadSuccess(`Uploaded successfully: ${file.name}`);
-          
-          // Update EMIS path for all classes in classStrength
-          const classStrength = formData.classStrength || {};
-          const updatedClassStrength: any = {};
-          
-          // Set emisPath for all existing classes
-          classes.forEach((cls) => {
-            if (classStrength[cls]) {
-              updatedClassStrength[cls] = {
-                ...classStrength[cls],
-                emisPath: result.file.path
-              };
-            } else {
-              // Initialize with empty values but set emisPath
-              updatedClassStrength[cls] = {
-                boys: '',
-                girls: '',
-                rte: '',
-                emisPath: result.file.path
-              };
-            }
-          });
-          
-          updateFormData({
-            classStrength: updatedClassStrength,
-            classStrengthDocumentFile: result.file.filename,
-            classStrengthDocumentFilePath: result.file.path
-          });
-        } else {
-          alert('Upload failed: ' + result.error);
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('Upload failed. Please try again.');
+        updateFormData({
+          classStrength: updatedClassStrength,
+          classStrengthDocumentFile: result.data.filename,
+          classStrengthDocumentFilePath: result.data.path,
+        });
+      } else {
+        alert('Upload failed: ' + (result.error || 'Unknown error'));
       }
     } else {
       alert('Please select a PDF file.');

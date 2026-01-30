@@ -1,6 +1,9 @@
 // Use relative path in development (Vite proxy) or full URL in production
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+// Mock mode: enabled when no real backend is configured
+const MOCK_MODE = !import.meta.env.VITE_API_URL && typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+
 export interface ApiResponse<T = any> {
   ok: boolean;
   data?: T;
@@ -12,10 +15,18 @@ export interface ApiResponse<T = any> {
  * Check if school exists (dummy OTP validation)
  */
 export async function checkSchoolExists(mobile: string): Promise<ApiResponse<{ isExisting: boolean; mobile: string }>> {
+  if (MOCK_MODE) {
+    return {
+      ok: true,
+      data: { isExisting: false, mobile },
+      message: 'Demo mode - proceeding without backend',
+    };
+  }
+
   try {
     const url = `${API_BASE_URL}/auth/continue`;
     console.log('API Call:', url, { mobile });
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -23,11 +34,7 @@ export async function checkSchoolExists(mobile: string): Promise<ApiResponse<{ i
       },
       body: JSON.stringify({ mobile }),
     });
-    
-    console.log('Response status:', response.status, response.statusText);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-    
-    // Check if response has content
+
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       const text = await response.text();
@@ -37,7 +44,7 @@ export async function checkSchoolExists(mobile: string): Promise<ApiResponse<{ i
         error: `Server returned non-JSON: ${contentType || 'unknown'}. Response: ${text.substring(0, 200)}`,
       };
     }
-    
+
     if (!response.ok) {
       const text = await response.text();
       console.error('Error response:', text);
@@ -51,24 +58,19 @@ export async function checkSchoolExists(mobile: string): Promise<ApiResponse<{ i
         };
       }
     }
-    
+
     const text = await response.text();
-    console.log('Response text:', text);
-    
+
     if (!text || text.trim() === '') {
-      console.error('Empty response from server');
       return {
         ok: false,
         error: 'Empty response from server - Backend may not be running or proxy misconfigured',
       };
     }
-    
+
     try {
-      const json = JSON.parse(text);
-      console.log('Parsed JSON:', json);
-      return json;
+      return JSON.parse(text);
     } catch (error) {
-      console.error('JSON parse error:', error, 'Text:', text);
       return {
         ok: false,
         error: `Invalid JSON response: ${text.substring(0, 200)}. Error: ${error instanceof Error ? error.message : 'Unknown'}`,
@@ -78,7 +80,7 @@ export async function checkSchoolExists(mobile: string): Promise<ApiResponse<{ i
     console.error('Fetch error:', error);
     return {
       ok: false,
-      error: error instanceof Error ? error.message : 'Network error - Backend server may not be running. Please ensure backend is running on port 5001.',
+      error: error instanceof Error ? error.message : 'Network error - Backend server may not be running.',
     };
   }
 }
@@ -87,9 +89,17 @@ export async function checkSchoolExists(mobile: string): Promise<ApiResponse<{ i
  * Fetch all school data
  */
 export async function getSchoolFullData(mobile: string): Promise<ApiResponse> {
+  if (MOCK_MODE) {
+    return {
+      ok: true,
+      data: {},
+      message: 'Demo mode - no saved data',
+    };
+  }
+
   try {
     const response = await fetch(`${API_BASE_URL}/schools/${mobile}/full`);
-    
+
     if (!response.ok) {
       const text = await response.text();
       try {
@@ -101,7 +111,7 @@ export async function getSchoolFullData(mobile: string): Promise<ApiResponse> {
         };
       }
     }
-    
+
     const text = await response.text();
     if (!text) {
       return {
@@ -109,7 +119,7 @@ export async function getSchoolFullData(mobile: string): Promise<ApiResponse> {
         error: 'Empty response from server',
       };
     }
-    
+
     try {
       return JSON.parse(text);
     } catch (error) {
@@ -130,6 +140,10 @@ export async function getSchoolFullData(mobile: string): Promise<ApiResponse> {
  * Save draft
  */
 export async function saveDraft(mobile: string, data: any): Promise<ApiResponse> {
+  if (MOCK_MODE) {
+    return { ok: true, message: 'Demo mode - draft not saved' };
+  }
+
   try {
     const response = await fetch(`${API_BASE_URL}/schools/${mobile}/draft`, {
       method: 'PUT',
@@ -138,7 +152,7 @@ export async function saveDraft(mobile: string, data: any): Promise<ApiResponse>
       },
       body: JSON.stringify(data),
     });
-    
+
     const text = await response.text();
     if (!text) {
       return {
@@ -146,7 +160,7 @@ export async function saveDraft(mobile: string, data: any): Promise<ApiResponse>
         error: 'Empty response from server',
       };
     }
-    
+
     try {
       return JSON.parse(text);
     } catch (error) {
@@ -167,6 +181,10 @@ export async function saveDraft(mobile: string, data: any): Promise<ApiResponse>
  * Submit final form
  */
 export async function submitForm(mobile: string, data: any): Promise<ApiResponse> {
+  if (MOCK_MODE) {
+    return { ok: true, message: 'Demo mode - form submitted (not saved)' };
+  }
+
   try {
     const response = await fetch(`${API_BASE_URL}/schools/${mobile}/submit`, {
       method: 'PUT',
@@ -175,7 +193,7 @@ export async function submitForm(mobile: string, data: any): Promise<ApiResponse
       },
       body: JSON.stringify(data),
     });
-    
+
     const text = await response.text();
     if (!text) {
       return {
@@ -183,7 +201,7 @@ export async function submitForm(mobile: string, data: any): Promise<ApiResponse
         error: 'Empty response from server',
       };
     }
-    
+
     try {
       return JSON.parse(text);
     } catch (error) {
@@ -196,6 +214,43 @@ export async function submitForm(mobile: string, data: any): Promise<ApiResponse
     return {
       ok: false,
       error: error instanceof Error ? error.message : 'Network error - Backend server may not be running',
+    };
+  }
+}
+
+/**
+ * Upload a document file. Returns mock success in demo mode.
+ */
+export async function uploadDocument(mobile: string, file: File): Promise<ApiResponse<{ filename: string; path: string }>> {
+  if (MOCK_MODE) {
+    return {
+      ok: true,
+      data: { filename: file.name, path: `demo/${file.name}` },
+      message: 'Demo mode - file not actually uploaded',
+    };
+  }
+
+  try {
+    const formDataUpload = new FormData();
+    formDataUpload.append('document', file);
+
+    const response = await fetch(`${API_BASE_URL}/uploads/${mobile}/document`, {
+      method: 'POST',
+      body: formDataUpload,
+    });
+
+    const result = await response.json();
+    if (result.ok) {
+      return {
+        ok: true,
+        data: { filename: result.file.filename, path: result.file.path },
+      };
+    }
+    return { ok: false, error: result.error || 'Upload failed' };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Upload failed. Please try again.',
     };
   }
 }

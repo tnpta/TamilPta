@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { RegistrationTranslations } from '../../types';
+import { uploadDocument } from '../../utils/api';
 
 interface TrustManagementFormProps {
   formData: any;
@@ -29,37 +30,16 @@ const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, upd
   const handleTrustDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf') {
-      try {
-        // Get mobile number from formData
-        const mobile = formData.schoolMobile || formData.correspondentMobile;
-        if (!mobile) {
-          alert('Please enter school mobile number first');
-          return;
-        }
+      const mobile = formData.schoolMobile || formData.correspondentMobile;
+      if (!mobile) { alert('Please enter school mobile number first'); return; }
 
-        const formDataUpload = new FormData();
-        formDataUpload.append('document', file);
-
-        const response = await fetch(`http://localhost:5001/api/uploads/${mobile}/document`, {
-          method: 'POST',
-          body: formDataUpload,
-        });
-
-        const result = await response.json();
-
-        if (result.ok) {
-          setUploadedTrustDocuments(file);
-          setTrustUploadSuccess(`Uploaded successfully: ${file.name}`);
-          updateFormData({
-            trustDocumentFile: result.file.filename,
-            trustDocumentPath: result.file.path
-          });
-        } else {
-          alert('Upload failed: ' + result.error);
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('Upload failed. Please try again.');
+      const result = await uploadDocument(mobile, file);
+      if (result.ok && result.data) {
+        setUploadedTrustDocuments(file);
+        setTrustUploadSuccess(`Uploaded successfully: ${file.name}`);
+        updateFormData({ trustDocumentFile: result.data.filename, trustDocumentPath: result.data.path });
+      } else {
+        alert('Upload failed: ' + (result.error || 'Unknown error'));
       }
     } else {
       alert('Please select a PDF file.');
@@ -69,37 +49,16 @@ const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, upd
   const handleAdditionalOrderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf') {
-      try {
-        // Get mobile number from formData
-        const mobile = formData.schoolMobile || formData.correspondentMobile;
-        if (!mobile) {
-          alert('Please enter school mobile number first');
-          return;
-        }
+      const mobile = formData.schoolMobile || formData.correspondentMobile;
+      if (!mobile) { alert('Please enter school mobile number first'); return; }
 
-        const formDataUpload = new FormData();
-        formDataUpload.append('document', file);
-
-        const response = await fetch(`http://localhost:5001/api/uploads/${mobile}/document`, {
-          method: 'POST',
-          body: formDataUpload,
-        });
-
-        const result = await response.json();
-
-        if (result.ok) {
-          setUploadedAdditionalOrderCopy(file);
-          setAdditionalOrderUploadSuccess(`Uploaded successfully: ${file.name}`);
-          updateFormData({
-            additionalOrderFile: result.file.filename,
-            additionalClassesOrderPath: result.file.path
-          });
-        } else {
-          alert('Upload failed: ' + result.error);
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('Upload failed. Please try again.');
+      const result = await uploadDocument(mobile, file);
+      if (result.ok && result.data) {
+        setUploadedAdditionalOrderCopy(file);
+        setAdditionalOrderUploadSuccess(`Uploaded successfully: ${file.name}`);
+        updateFormData({ additionalOrderFile: result.data.filename, additionalClassesOrderPath: result.data.path });
+      } else {
+        alert('Upload failed: ' + (result.error || 'Unknown error'));
       }
     } else {
       alert('Please select a PDF file.');
@@ -109,37 +68,16 @@ const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, upd
   const handleLatestRenewalOrderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf') {
-      try {
-        // Get mobile number from formData
-        const mobile = formData.schoolMobile || formData.correspondentMobile;
-        if (!mobile) {
-          alert('Please enter school mobile number first');
-          return;
-        }
+      const mobile = formData.schoolMobile || formData.correspondentMobile;
+      if (!mobile) { alert('Please enter school mobile number first'); return; }
 
-        const formDataUpload = new FormData();
-        formDataUpload.append('document', file);
-
-        const response = await fetch(`http://localhost:5001/api/uploads/${mobile}/document`, {
-          method: 'POST',
-          body: formDataUpload,
-        });
-
-        const result = await response.json();
-
-        if (result.ok) {
-          setUploadedLatestRenewalOrderCopy(file);
-          setLatestRenewalUploadSuccess(`Uploaded successfully: ${file.name}`);
-          updateFormData({
-            latestRenewalOrderFile: result.file.filename,
-            latestRenewalOrderPath: result.file.path
-          });
-        } else {
-          alert('Upload failed: ' + result.error);
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('Upload failed. Please try again.');
+      const result = await uploadDocument(mobile, file);
+      if (result.ok && result.data) {
+        setUploadedLatestRenewalOrderCopy(file);
+        setLatestRenewalUploadSuccess(`Uploaded successfully: ${file.name}`);
+        updateFormData({ latestRenewalOrderFile: result.data.filename, latestRenewalOrderPath: result.data.path });
+      } else {
+        alert('Upload failed: ' + (result.error || 'Unknown error'));
       }
     } else {
       alert('Please select a PDF file.');

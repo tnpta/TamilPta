@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { RegistrationTranslations } from '../../types';
+import { uploadDocument } from '../../utils/api';
 
 interface FeesOtherFormProps {
   formData: any;
@@ -21,40 +22,26 @@ const FeesOtherForm: React.FC<FeesOtherFormProps> = ({ formData, updateFormData,
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const allowedTypes = ['application/pdf'];
-      if (allowedTypes.includes(file.type)) {
-        try {
-          const mobile = formData.schoolMobile || formData.correspondentMobile;
-          if (!mobile) {
-            setUploadMessage('Please enter school mobile number first');
-            return;
-          }
-
-          const formDataUpload = new FormData();
-          formDataUpload.append('document', file);
-
-          const response = await fetch(`http://localhost:5001/api/uploads/${mobile}/document`, {
-            method: 'POST',
-            body: formDataUpload,
-          });
-
-          const result = await response.json();
-
-          if (result.ok) {
-            setUploadMessage(`Uploaded successfully: ${file.name}`);
-            updateFormData({
-              feesFixationOrderFile: result.file.filename,
-              feesFixationOrderPath: result.file.path
-            });
-          } else {
-            setUploadMessage('Upload failed: ' + result.error);
-          }
-        } catch (error) {
-          console.error('Upload error:', error);
-          setUploadMessage('Upload failed. Please try again.');
-        }
-      } else {
+      if (file.type !== 'application/pdf') {
         setUploadMessage('Only PDF files are allowed.');
+        return;
+      }
+
+      const mobile = formData.schoolMobile || formData.correspondentMobile;
+      if (!mobile) {
+        setUploadMessage('Please enter school mobile number first');
+        return;
+      }
+
+      const result = await uploadDocument(mobile, file);
+      if (result.ok && result.data) {
+        setUploadMessage(`Uploaded successfully: ${file.name}`);
+        updateFormData({
+          feesFixationOrderFile: result.data.filename,
+          feesFixationOrderPath: result.data.path,
+        });
+      } else {
+        setUploadMessage('Upload failed: ' + (result.error || 'Unknown error'));
       }
     }
   };
