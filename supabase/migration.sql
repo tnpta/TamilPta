@@ -22,7 +22,7 @@ CREATE INDEX idx_users_role ON users(role);
 -- Insert default super admin (password: admin123 - change in production!)
 -- bcrypt hash for 'admin123'
 INSERT INTO users (mobile, password_hash, name, role)
-VALUES ('9999999999', '$2a$10$rQZ8K1QF1Y6kPZv9u5j8xuGqJ7jW7H5VmD3O8JX5oYXfZ.q5YKXuK', 'Super Admin', 'super_admin')
+VALUES ('9999999999', '$2a$10$jIrvRper7.IqF67.9Gg5Ne0X.NezTiHmvlexbW/9t4ygBDlqolOPa', 'Super Admin', 'super_admin')
 ON CONFLICT (mobile) DO NOTHING;
 
 -- 1) BASIC INFORMATION (MASTER)
