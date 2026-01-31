@@ -2,15 +2,40 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabase, STORAGE_BUCKET } from '../../../lib/supabase';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  }
-
   const { mobile } = req.query;
   const mobileStr = Array.isArray(mobile) ? mobile[0] : mobile;
 
   if (!mobileStr || !/^\d{10}$/.test(mobileStr)) {
     return res.status(400).json({ ok: false, error: 'Invalid mobile number' });
+  }
+
+  // GET: Generate download URL for an existing document
+  if (req.method === 'GET') {
+    const { path } = req.query;
+    const pathStr = Array.isArray(path) ? path[0] : path;
+
+    if (!pathStr) {
+      return res.status(400).json({ ok: false, error: 'Path is required' });
+    }
+
+    try {
+      const { data, error } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .createSignedUrl(pathStr, 3600); // 1-hour expiry
+
+      if (error) throw error;
+
+      return res.status(200).json({
+        ok: true,
+        data: { downloadUrl: data.signedUrl },
+      });
+    } catch (error: any) {
+      return res.status(500).json({ ok: false, error: 'Failed to create download URL: ' + error.message });
+    }
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
   const { filename, contentType } = req.body;

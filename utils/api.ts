@@ -279,3 +279,43 @@ export async function updateAdminUser(userData: {
     return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
   }
 }
+
+// ========================
+// Document Downloads
+// ========================
+
+export async function getDocumentDownloadUrl(mobile: string, path: string): Promise<string | null> {
+  if (DEMO_MODE) return null;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/uploads/${mobile}/signed-url?path=${encodeURIComponent(path)}`,
+      { headers: getAuthHeaders() }
+    );
+    const data = await response.json();
+    return data.ok ? data.data.downloadUrl : null;
+  } catch {
+    return null;
+  }
+}
+
+// ========================
+// Public Stats
+// ========================
+
+export async function getPublicStats(): Promise<ApiResponse<{
+  totalRegistered: number;
+  totalSubmitted: number;
+  districtCount: number;
+}>> {
+  if (DEMO_MODE) {
+    return { ok: true, data: { totalRegistered: 0, totalSubmitted: 0, districtCount: 0 }, message: 'Demo mode' };
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/stats`);
+    return await response.json();
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
+  }
+}

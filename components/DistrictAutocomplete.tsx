@@ -1,46 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, ChevronDown, X } from 'lucide-react';
-
-const TAMIL_NADU_DISTRICTS = [
-  'Ariyalur',
-  'Chengalpattu',
-  'Chennai',
-  'Coimbatore',
-  'Cuddalore',
-  'Dharmapuri',
-  'Dindigul',
-  'Erode',
-  'Kallakurichi',
-  'Kancheepuram',
-  'Kanniyakumari',
-  'Karur',
-  'Krishnagiri',
-  'Madurai',
-  'Mayiladuthurai',
-  'Nagapattinam',
-  'Namakkal',
-  'Nilgiris',
-  'Perambalur',
-  'Pudukkottai',
-  'Ramanathapuram',
-  'Ranipet',
-  'Salem',
-  'Sivagangai',
-  'Tenkasi',
-  'Thanjavur',
-  'Theni',
-  'Thoothukudi',
-  'Tiruchirappalli',
-  'Tirunelveli',
-  'Tirupathur',
-  'Tiruppur',
-  'Tiruvallur',
-  'Tiruvannamalai',
-  'Tiruvarur',
-  'Vellore',
-  'Viluppuram',
-  'Virudhunagar'
-];
+import { TAMIL_NADU_DISTRICTS } from '../utils/districts';
 
 interface DistrictAutocompleteProps {
   value: string;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Globe, Phone, Mail } from 'lucide-react';
+import { Globe, Phone, Mail, LogIn, LogOut, LayoutDashboard, User } from 'lucide-react';
 import { Language, TranslationContent } from '../types';
+import { useAuth } from './AuthContext';
 
 interface HeaderProps {
   language: Language;
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,7 +26,7 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
     setLanguage(language === 'en' ? 'ta' : 'en');
   };
 
-  const navLinks: any[] = [];
+  const isAdmin = user?.role === 'super_admin' || user?.role === 'admin';
 
   return (
     <header className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-lg' : 'bg-white/95 backdrop-blur-md'}`}>
@@ -64,7 +66,41 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-3">
+          {isAuthenticated && isAdmin && (
+            <Link
+              to="/admin/dashboard"
+              className="flex items-center gap-2 px-4 py-2 text-tn-green border border-tn-green rounded-full hover:bg-tn-green hover:text-white transition-all text-sm font-semibold"
+            >
+              <LayoutDashboard size={16} />
+              {language === 'en' ? 'Admin Panel' : 'நிர்வாகம்'}
+            </Link>
+          )}
+
+          {isAuthenticated ? (
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-2 text-sm text-gray-600">
+                <User size={14} />
+                <span className="font-medium">{user?.name}</span>
+              </span>
+              <button
+                onClick={logout}
+                className="flex items-center gap-2 px-4 py-2 text-red-600 border border-red-300 rounded-full hover:bg-red-50 transition-all text-sm font-semibold"
+              >
+                <LogOut size={16} />
+                {language === 'en' ? 'Logout' : 'வெளியேறு'}
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="flex items-center gap-2 px-4 py-2 text-tn-green border border-tn-green rounded-full hover:bg-tn-green hover:text-white transition-all text-sm font-semibold"
+            >
+              <LogIn size={16} />
+              {language === 'en' ? 'Login' : 'உள்நுழைக'}
+            </Link>
+          )}
+
           <button
             onClick={toggleLanguage}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-tn-green to-tn-blue text-white rounded-full hover:shadow-lg hover:scale-105 transition-all text-sm font-semibold"
@@ -74,8 +110,30 @@ const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
           </button>
         </div>
 
-        {/* Mobile Language Toggle */}
-        <div className="lg:hidden flex items-center gap-3">
+        {/* Mobile Nav */}
+        <div className="lg:hidden flex items-center gap-2">
+          {isAuthenticated && isAdmin && (
+            <Link
+              to="/admin/dashboard"
+              className="p-2 text-tn-green border border-tn-green rounded-full"
+            >
+              <LayoutDashboard size={16} />
+            </Link>
+          )}
+
+          {isAuthenticated ? (
+            <button
+              onClick={logout}
+              className="p-2 text-red-600 border border-red-300 rounded-full"
+            >
+              <LogOut size={16} />
+            </button>
+          ) : (
+            <Link to="/login" className="p-2 text-tn-green border border-tn-green rounded-full">
+              <LogIn size={16} />
+            </Link>
+          )}
+
           <button
             onClick={toggleLanguage}
             className="flex items-center gap-1 px-3 py-1.5 bg-tn-green text-white rounded-full text-xs font-bold"

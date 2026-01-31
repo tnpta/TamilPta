@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TranslationContent } from '../types';
-import { ChevronLeft, ChevronRight, Users, GraduationCap, School, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, CheckCircle, School, MapPin } from 'lucide-react';
+import { getPublicStats } from '../utils/api';
 
 interface HeroProps {
   t: TranslationContent;
@@ -27,6 +28,9 @@ const carouselImages = [
 const Hero: React.FC<HeroProps> = ({ t }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [liveStats, setLiveStats] = useState<{ totalRegistered: number; totalSubmitted: number; districtCount: number } | null>(null);
+
+  const language = t.nav.home === 'Home' ? 'en' : 'ta';
 
   useEffect(() => {
     if (!isAutoPlaying) return;
@@ -35,6 +39,14 @@ const Hero: React.FC<HeroProps> = ({ t }) => {
     }, 5000);
     return () => clearInterval(timer);
   }, [isAutoPlaying]);
+
+  useEffect(() => {
+    getPublicStats().then(res => {
+      if (res.ok && res.data) {
+        setLiveStats(res.data);
+      }
+    });
+  }, []);
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
@@ -46,10 +58,10 @@ const Hero: React.FC<HeroProps> = ({ t }) => {
   const prevSlide = () => goToSlide((currentSlide - 1 + carouselImages.length) % carouselImages.length);
 
   const stats = [
-    { num: '50K+', label: 'Schools', icon: School },
-    { num: '1M+', label: 'Parents', icon: Users },
-    { num: '2M+', label: 'Students', icon: GraduationCap },
-    { num: '100%', label: 'Commitment', icon: Heart }
+    { num: liveStats ? liveStats.totalRegistered.toLocaleString() : '---', label: language === 'en' ? 'Schools Registered' : 'பதிவு செய்த பள்ளிகள்', icon: School },
+    { num: liveStats ? liveStats.totalSubmitted.toLocaleString() : '---', label: language === 'en' ? 'Submitted' : 'சமர்ப்பிக்கப்பட்டது', icon: CheckCircle },
+    { num: liveStats ? liveStats.districtCount.toLocaleString() : '---', label: language === 'en' ? 'Districts' : 'மாவட்டங்கள்', icon: MapPin },
+    { num: '38', label: language === 'en' ? 'Total Districts' : 'மொத்த மாவட்டங்கள்', icon: Users }
   ];
 
   return (
