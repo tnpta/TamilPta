@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from '../../lib/supabase';
-import { getAuthUser, hasRole, hashPassword } from '../../lib/auth';
+import { supabase } from '../_lib/supabase';
+import { getAuthUser, hasRole, hashPassword } from '../_lib/auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = getAuthUser(req);

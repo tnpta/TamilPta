@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../../_lib/supabase';
 
 // Re-use the same saveSchoolData logic from draft.ts
 // Import isn't straightforward in serverless, so we inline a thin wrapper

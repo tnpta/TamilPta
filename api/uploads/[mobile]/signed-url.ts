@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase, STORAGE_BUCKET } from '../../../lib/supabase';
+import { supabase, STORAGE_BUCKET } from '../../_lib/supabase';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { mobile } = req.query;
