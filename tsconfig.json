@@ -30,6 +30,9 @@
   "exclude": [
     "tamilnaduSchoolReg",
     "backend",
-    "node_modules"
+    "node_modules",
+    "api",
+    "lib",
+    "supabase"
   ]
 }

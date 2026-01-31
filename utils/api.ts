@@ -1,8 +1,10 @@
-// Use relative path in development (Vite proxy) or full URL in production
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Mock mode: enabled when no real backend is configured
-const MOCK_MODE = !import.meta.env.VITE_API_URL && typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+// Demo mode: no backend configured and not on localhost
+const DEMO_MODE = !import.meta.env.VITE_API_URL
+  && typeof window !== 'undefined'
+  && window.location.hostname !== 'localhost'
+  && !document.querySelector('meta[name="has-api"]');
 
 export interface ApiResponse<T = any> {
   ok: boolean;
@@ -11,246 +13,269 @@ export interface ApiResponse<T = any> {
   message?: string;
 }
 
-/**
- * Check if school exists (dummy OTP validation)
- */
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+// ========================
+// Auth
+// ========================
+
 export async function checkSchoolExists(mobile: string): Promise<ApiResponse<{ isExisting: boolean; mobile: string }>> {
-  if (MOCK_MODE) {
-    return {
-      ok: true,
-      data: { isExisting: false, mobile },
-      message: 'Demo mode - proceeding without backend',
-    };
+  if (DEMO_MODE) {
+    return { ok: true, data: { isExisting: false, mobile }, message: 'Demo mode' };
   }
 
   try {
-    const url = `${API_BASE_URL}/auth/continue`;
-    console.log('API Call:', url, { mobile });
-
-    const response = await fetch(url, {
+    const response = await fetch(`${API_BASE_URL}/auth/continue`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mobile }),
     });
 
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       const text = await response.text();
-      console.error('Non-JSON response:', text);
-      return {
-        ok: false,
-        error: `Server returned non-JSON: ${contentType || 'unknown'}. Response: ${text.substring(0, 200)}`,
-      };
+      return { ok: false, error: `Server returned non-JSON: ${contentType}. ${text.substring(0, 200)}` };
     }
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error('Error response:', text);
-      try {
-        const json = JSON.parse(text);
-        return json;
-      } catch {
-        return {
-          ok: false,
-          error: `Server error: ${response.status} ${response.statusText}. Response: ${text.substring(0, 200)}`,
-        };
-      }
-    }
-
-    const text = await response.text();
-
-    if (!text || text.trim() === '') {
-      return {
-        ok: false,
-        error: 'Empty response from server - Backend may not be running or proxy misconfigured',
-      };
-    }
-
-    try {
-      return JSON.parse(text);
-    } catch (error) {
-      return {
-        ok: false,
-        error: `Invalid JSON response: ${text.substring(0, 200)}. Error: ${error instanceof Error ? error.message : 'Unknown'}`,
-      };
-    }
+    return await response.json();
   } catch (error) {
-    console.error('Fetch error:', error);
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : 'Network error - Backend server may not be running.',
-    };
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
   }
 }
 
-/**
- * Fetch all school data
- */
+export async function loginUser(mobile: string, password: string): Promise<ApiResponse<{ token: string; user: any }>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mobile, password }),
+    });
+    const data = await response.json();
+
+    if (data.ok && data.data?.token) {
+      localStorage.setItem('auth_token', data.data.token);
+      localStorage.setItem('auth_user', JSON.stringify(data.data.user));
+    }
+    return data;
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
+  }
+}
+
+export async function registerUser(mobile: string, password: string, name: string): Promise<ApiResponse<{ token: string; user: any }>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mobile, password, name }),
+    });
+    const data = await response.json();
+
+    if (data.ok && data.data?.token) {
+      localStorage.setItem('auth_token', data.data.token);
+      localStorage.setItem('auth_user', JSON.stringify(data.data.user));
+    }
+    return data;
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
+  }
+}
+
+export function logout() {
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('auth_user');
+}
+
+export function getStoredUser(): { mobile: string; name: string; role: string; district?: string } | null {
+  try {
+    const json = localStorage.getItem('auth_user');
+    return json ? JSON.parse(json) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isLoggedIn(): boolean {
+  return !!localStorage.getItem('auth_token');
+}
+
+// ========================
+// School Data
+// ========================
+
 export async function getSchoolFullData(mobile: string): Promise<ApiResponse> {
-  if (MOCK_MODE) {
-    return {
-      ok: true,
-      data: {},
-      message: 'Demo mode - no saved data',
-    };
+  if (DEMO_MODE) {
+    return { ok: true, data: {}, message: 'Demo mode' };
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/schools/${mobile}/full`);
-
-    if (!response.ok) {
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch {
-        return {
-          ok: false,
-          error: `Server error: ${response.status} ${response.statusText}`,
-        };
-      }
-    }
-
-    const text = await response.text();
-    if (!text) {
-      return {
-        ok: false,
-        error: 'Empty response from server',
-      };
-    }
-
-    try {
-      return JSON.parse(text);
-    } catch (error) {
-      return {
-        ok: false,
-        error: `Invalid JSON response: ${text.substring(0, 100)}`,
-      };
-    }
+    const response = await fetch(`${API_BASE_URL}/schools/${mobile}/full`, {
+      headers: getAuthHeaders(),
+    });
+    return await response.json();
   } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : 'Network error - Backend server may not be running',
-    };
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
   }
 }
 
-/**
- * Save draft
- */
 export async function saveDraft(mobile: string, data: any): Promise<ApiResponse> {
-  if (MOCK_MODE) {
+  if (DEMO_MODE) {
     return { ok: true, message: 'Demo mode - draft not saved' };
   }
 
   try {
     const response = await fetch(`${API_BASE_URL}/schools/${mobile}/draft`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data),
     });
-
-    const text = await response.text();
-    if (!text) {
-      return {
-        ok: false,
-        error: 'Empty response from server',
-      };
-    }
-
-    try {
-      return JSON.parse(text);
-    } catch (error) {
-      return {
-        ok: false,
-        error: `Invalid JSON response: ${text.substring(0, 100)}`,
-      };
-    }
+    return await response.json();
   } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : 'Network error - Backend server may not be running',
-    };
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
   }
 }
 
-/**
- * Submit final form
- */
 export async function submitForm(mobile: string, data: any): Promise<ApiResponse> {
-  if (MOCK_MODE) {
+  if (DEMO_MODE) {
     return { ok: true, message: 'Demo mode - form submitted (not saved)' };
   }
 
   try {
     const response = await fetch(`${API_BASE_URL}/schools/${mobile}/submit`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data),
     });
-
-    const text = await response.text();
-    if (!text) {
-      return {
-        ok: false,
-        error: 'Empty response from server',
-      };
-    }
-
-    try {
-      return JSON.parse(text);
-    } catch (error) {
-      return {
-        ok: false,
-        error: `Invalid JSON response: ${text.substring(0, 100)}`,
-      };
-    }
+    return await response.json();
   } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : 'Network error - Backend server may not be running',
-    };
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
   }
 }
 
-/**
- * Upload a document file. Returns mock success in demo mode.
- */
+// ========================
+// File Uploads
+// ========================
+
 export async function uploadDocument(mobile: string, file: File): Promise<ApiResponse<{ filename: string; path: string }>> {
-  if (MOCK_MODE) {
-    return {
-      ok: true,
-      data: { filename: file.name, path: `demo/${file.name}` },
-      message: 'Demo mode - file not actually uploaded',
-    };
+  if (DEMO_MODE) {
+    return { ok: true, data: { filename: file.name, path: `demo/${file.name}` }, message: 'Demo mode' };
   }
 
   try {
-    const formDataUpload = new FormData();
-    formDataUpload.append('document', file);
-
-    const response = await fetch(`${API_BASE_URL}/uploads/${mobile}/document`, {
+    // Step 1: Get signed upload URL from our API
+    const urlResponse = await fetch(`${API_BASE_URL}/uploads/${mobile}/signed-url`, {
       method: 'POST',
-      body: formDataUpload,
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ filename: file.name, contentType: file.type }),
     });
 
-    const result = await response.json();
-    if (result.ok) {
-      return {
-        ok: true,
-        data: { filename: result.file.filename, path: result.file.path },
-      };
+    const urlData = await urlResponse.json();
+    if (!urlData.ok) {
+      return { ok: false, error: urlData.error || 'Failed to get upload URL' };
     }
-    return { ok: false, error: result.error || 'Upload failed' };
-  } catch (error) {
+
+    // Step 2: Upload file directly to Supabase Storage
+    const uploadResponse = await fetch(urlData.data.uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      return { ok: false, error: 'File upload failed' };
+    }
+
     return {
-      ok: false,
-      error: error instanceof Error ? error.message : 'Upload failed. Please try again.',
+      ok: true,
+      data: {
+        filename: file.name,
+        path: urlData.data.path,
+      },
     };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Upload failed' };
+  }
+}
+
+// ========================
+// Admin APIs
+// ========================
+
+export async function getAdminSchools(params?: {
+  status?: string;
+  district?: string;
+  page?: number;
+  limit?: number;
+}): Promise<ApiResponse> {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.district) searchParams.set('district', params.district);
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+
+    const response = await fetch(`${API_BASE_URL}/admin/schools?${searchParams}`, {
+      headers: getAuthHeaders(),
+    });
+    return await response.json();
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
+  }
+}
+
+export async function getAdminUsers(): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+      headers: getAuthHeaders(),
+    });
+    return await response.json();
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
+  }
+}
+
+export async function createAdminUser(userData: {
+  mobile: string;
+  password: string;
+  name: string;
+  role: string;
+  district?: string;
+}): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(userData),
+    });
+    return await response.json();
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
+  }
+}
+
+export async function updateAdminUser(userData: {
+  id: number;
+  name?: string;
+  role?: string;
+  district?: string;
+  is_active?: boolean;
+  password?: string;
+}): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(userData),
+    });
+    return await response.json();
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error' };
   }
 }
