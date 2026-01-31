@@ -3,42 +3,36 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   const checks: Record<string, any> = {};
 
-  // 1. Check env vars exist (don't reveal values)
-  checks.SUPABASE_URL = !!process.env.SUPABASE_URL;
-  checks.SUPABASE_SERVICE_ROLE_KEY = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = (process.env.SUPABASE_URL || '').trim();
+  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+
+  // 1. Check env vars (safe info only)
+  checks.SUPABASE_URL_length = url.length;
+  checks.SUPABASE_URL_prefix = url.substring(0, 20);
+  checks.SUPABASE_SERVICE_ROLE_KEY_length = key.length;
   checks.JWT_SECRET = !!process.env.JWT_SECRET;
 
-  // 2. Try importing supabase client
+  // 2. Direct fetch test to Supabase REST API
+  try {
+    const response = await fetch(`${url}/rest/v1/`, {
+      headers: {
+        'apikey': key,
+        'Authorization': `Bearer ${key}`,
+      },
+    });
+    checks.directFetch = { status: response.status, statusText: response.statusText };
+  } catch (e: any) {
+    checks.directFetch = { error: e.message, cause: e.cause?.message || null };
+  }
+
+  // 3. Try supabase client query
   try {
     const { createClient } = await import('@supabase/supabase-js');
-    checks.supabaseImport = true;
-
-    if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      const client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-      // 3. Try a simple query
-      const { data, error } = await client.from('users').select('id').limit(1);
-      checks.supabaseQuery = error ? { error: error.message, code: error.code } : { ok: true, rows: data?.length };
-    }
+    const client = createClient(url, key);
+    const { data, error } = await client.from('users').select('id').limit(1);
+    checks.supabaseQuery = error ? { error: error.message, code: error.code, details: error.details } : { ok: true, rows: data?.length };
   } catch (e: any) {
-    checks.supabaseImport = false;
-    checks.importError = e.message;
-  }
-
-  // 4. Try importing other deps
-  try {
-    await import('jsonwebtoken');
-    checks.jwtImport = true;
-  } catch (e: any) {
-    checks.jwtImport = false;
-    checks.jwtError = e.message;
-  }
-
-  try {
-    await import('bcryptjs');
-    checks.bcryptImport = true;
-  } catch (e: any) {
-    checks.bcryptImport = false;
-    checks.bcryptError = e.message;
+    checks.supabaseClientError = e.message;
   }
 
   return res.status(200).json({ checks });
