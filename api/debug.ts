@@ -3,36 +3,24 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   const checks: Record<string, any> = {};
 
-  const url = (process.env.SUPABASE_URL || '').trim();
-  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
-
-  // 1. Check env vars (safe info only)
-  checks.SUPABASE_URL_length = url.length;
-  checks.SUPABASE_URL_prefix = url.substring(0, 20);
-  checks.SUPABASE_SERVICE_ROLE_KEY_length = key.length;
-  checks.JWT_SECRET = !!process.env.JWT_SECRET;
-
-  // 2. Direct fetch test to Supabase REST API
+  // 1. Test importing lib/supabase (same as login.ts does)
   try {
-    const response = await fetch(`${url}/rest/v1/`, {
-      headers: {
-        'apikey': key,
-        'Authorization': `Bearer ${key}`,
-      },
-    });
-    checks.directFetch = { status: response.status, statusText: response.statusText };
+    const { supabase } = await import('../lib/supabase');
+    checks.libSupabase = 'imported ok';
+    const { data, error } = await supabase.from('users').select('id, mobile, role').limit(1);
+    checks.usersQuery = error ? { error: error.message } : { ok: true, rows: data };
   } catch (e: any) {
-    checks.directFetch = { error: e.message, cause: e.cause?.message || null };
+    checks.libSupabase = { error: e.message, stack: e.stack?.split('\n').slice(0, 5) };
   }
 
-  // 3. Try supabase client query
+  // 2. Test importing lib/auth (same as login.ts does)
   try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const client = createClient(url, key);
-    const { data, error } = await client.from('users').select('id').limit(1);
-    checks.supabaseQuery = error ? { error: error.message, code: error.code, details: error.details } : { ok: true, rows: data?.length };
+    const { comparePassword, signToken } = await import('../lib/auth');
+    checks.libAuth = 'imported ok';
+    checks.signToken = typeof signToken === 'function';
+    checks.comparePassword = typeof comparePassword === 'function';
   } catch (e: any) {
-    checks.supabaseClientError = e.message;
+    checks.libAuth = { error: e.message, stack: e.stack?.split('\n').slice(0, 5) };
   }
 
   return res.status(200).json({ checks });
