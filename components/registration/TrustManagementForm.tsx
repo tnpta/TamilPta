@@ -17,10 +17,16 @@ const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, upd
   const [trustUploadSuccess, setTrustUploadSuccess] = useState<string>('');
   const [additionalOrderUploadSuccess, setAdditionalOrderUploadSuccess] = useState<string>('');
   const [latestRenewalUploadSuccess, setLatestRenewalUploadSuccess] = useState<string>('');
+  const [cbseNocUploadSuccess, setCbseNocUploadSuccess] = useState<string>('');
+  const [cbseAffiliationUploadSuccess, setCbseAffiliationUploadSuccess] = useState<string>('');
+  const [cbseRecognitionUploadSuccess, setCbseRecognitionUploadSuccess] = useState<string>('');
 
   const trustFileInputRef = useRef<HTMLInputElement>(null);
   const additionalOrderFileInputRef = useRef<HTMLInputElement>(null);
   const latestRenewalFileInputRef = useRef<HTMLInputElement>(null);
+  const cbseNocFileInputRef = useRef<HTMLInputElement>(null);
+  const cbseAffiliationFileInputRef = useRef<HTMLInputElement>(null);
+  const cbseRecognitionFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -76,6 +82,24 @@ const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, upd
         setUploadedLatestRenewalOrderCopy(file);
         setLatestRenewalUploadSuccess(`Uploaded successfully: ${file.name}`);
         updateFormData({ latestRenewalOrderFile: result.data.filename, latestRenewalOrderPath: result.data.path });
+      } else {
+        alert('Upload failed: ' + (result.error || 'Unknown error'));
+      }
+    } else {
+      alert('Please select a PDF file.');
+    }
+  };
+
+  const handleCbseDocUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldPath: string, setSuccess: (s: string) => void) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      const mobile = formData.schoolMobile || formData.correspondentMobile;
+      if (!mobile) { alert('Please enter school mobile number first'); return; }
+
+      const result = await uploadDocument(mobile, file);
+      if (result.ok && result.data) {
+        setSuccess(`Uploaded successfully: ${file.name}`);
+        updateFormData({ [fieldPath]: result.data.path });
       } else {
         alert('Upload failed: ' + (result.error || 'Unknown error'));
       }
@@ -473,6 +497,114 @@ const TrustManagementForm: React.FC<TrustManagementFormProps> = ({ formData, upd
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
                 placeholder="e.g., 1997"
               />
+            </div>
+          </div>
+        )}
+
+        {(formData.schoolType === 'CBSE' || (formData.schoolTypes && formData.schoolTypes.includes('CBSE'))) && (
+          <div className="bg-orange-50 rounded-lg p-5 mb-6 border border-orange-200">
+            <h4 className="text-md font-semibold text-gray-800 mb-4">
+              {language === 'en' ? 'CBSE Registration Details' : 'CBSE பதிவு விவரங்கள்'}
+            </h4>
+            <div className="space-y-4">
+              {/* NOC from Department */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'en' ? 'Date & No. of NOC from Department' : 'துறையிலிருந்து NOC தேதி & எண்'}
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    name="cbseNocDateNo"
+                    value={formData.cbseNocDateNo || ''}
+                    onChange={handleChange}
+                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+                    placeholder={language === 'en' ? 'Date & Number' : 'தேதி & எண்'}
+                  />
+                  <input type="file" ref={cbseNocFileInputRef} onChange={(e) => handleCbseDocUpload(e, 'cbseNocDocumentPath', setCbseNocUploadSuccess)} accept=".pdf" style={{ display: 'none' }} />
+                  <button type="button" onClick={() => cbseNocFileInputRef.current?.click()} className="px-4 py-2.5 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2 whitespace-nowrap">
+                    <Upload size={18} />
+                    {language === 'en' ? 'Upload' : 'பதிவேற்று'}
+                  </button>
+                </div>
+                {cbseNocUploadSuccess && <p className="text-green-600 text-sm mt-1">{cbseNocUploadSuccess}</p>}
+              </div>
+
+              {/* Affiliation from Board */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'en' ? 'Date & No. of Affiliation from Board' : 'வாரியத்திலிருந்து இணைப்பு தேதி & எண்'}
+                </label>
+                <input
+                  type="text"
+                  name="cbseAffiliationDateNo"
+                  value={formData.cbseAffiliationDateNo || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+                  placeholder={language === 'en' ? 'Date & Number' : 'தேதி & எண்'}
+                />
+              </div>
+
+              {/* Affiliation Classes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'en' ? 'Affiliation Obtained for Classes' : 'இணைப்பு பெறப்பட்ட வகுப்புகள்'}
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    name="cbseAffiliationClasses"
+                    value={formData.cbseAffiliationClasses || ''}
+                    onChange={handleChange}
+                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+                    placeholder={language === 'en' ? 'e.g., I to X' : 'எ.கா., I முதல் X'}
+                  />
+                  <input type="file" ref={cbseAffiliationFileInputRef} onChange={(e) => handleCbseDocUpload(e, 'cbseAffiliationDocumentPath', setCbseAffiliationUploadSuccess)} accept=".pdf" style={{ display: 'none' }} />
+                  <button type="button" onClick={() => cbseAffiliationFileInputRef.current?.click()} className="px-4 py-2.5 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2 whitespace-nowrap">
+                    <Upload size={18} />
+                    {language === 'en' ? 'Upload' : 'பதிவேற்று'}
+                  </button>
+                </div>
+                {cbseAffiliationUploadSuccess && <p className="text-green-600 text-sm mt-1">{cbseAffiliationUploadSuccess}</p>}
+              </div>
+
+              {/* Recognition Period & Classes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'en' ? 'Certificate of Recognition from State Govt (Period & Classes)' : 'மாநில அரசின் அங்கீகார சான்றிதழ் (காலம் & வகுப்புகள்)'}
+                </label>
+                <textarea
+                  name="cbseRecognitionPeriodClasses"
+                  value={formData.cbseRecognitionPeriodClasses || ''}
+                  onChange={handleChange}
+                  rows={2}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+                  placeholder={language === 'en' ? 'Enter recognition period and classes' : 'அங்கீகார காலம் மற்றும் வகுப்புகளை உள்ளிடவும்'}
+                />
+              </div>
+
+              {/* Recognition Date & No */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'en' ? 'Date & No. of Certificate of Recognition' : 'அங்கீகார சான்றிதழ் தேதி & எண்'}
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    name="cbseRecognitionDateNo"
+                    value={formData.cbseRecognitionDateNo || ''}
+                    onChange={handleChange}
+                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+                    placeholder={language === 'en' ? 'Date & Number' : 'தேதி & எண்'}
+                  />
+                  <input type="file" ref={cbseRecognitionFileInputRef} onChange={(e) => handleCbseDocUpload(e, 'cbseRecognitionDocumentPath', setCbseRecognitionUploadSuccess)} accept=".pdf" style={{ display: 'none' }} />
+                  <button type="button" onClick={() => cbseRecognitionFileInputRef.current?.click()} className="px-4 py-2.5 bg-tn-green text-white rounded-lg hover:bg-tn-green/90 transition-colors flex items-center gap-2 whitespace-nowrap">
+                    <Upload size={18} />
+                    {language === 'en' ? 'Upload' : 'பதிவேற்று'}
+                  </button>
+                </div>
+                {cbseRecognitionUploadSuccess && <p className="text-green-600 text-sm mt-1">{cbseRecognitionUploadSuccess}</p>}
+              </div>
             </div>
           </div>
         )}

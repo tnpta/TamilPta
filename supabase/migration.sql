@@ -1,6 +1,7 @@
 -- ============================================
 -- Tamil Nadu PTA - Supabase PostgreSQL Schema
 -- Run this in Supabase SQL Editor
+-- Safe to re-run (uses IF NOT EXISTS everywhere)
 -- ============================================
 
 -- 0) USERS & AUTH
@@ -16,14 +17,14 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_users_mobile ON users(mobile);
-CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_mobile ON users(mobile);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- Insert default super admin (password: admin123 - change in production!)
 -- bcrypt hash for 'admin123'
 INSERT INTO users (mobile, password_hash, name, role)
 VALUES ('9999999999', '$2a$10$jIrvRper7.IqF67.9Gg5Ne0X.NezTiHmvlexbW/9t4ygBDlqolOPa', 'Super Admin', 'super_admin')
-ON CONFLICT (mobile) DO NOTHING;
+ON CONFLICT (mobile) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- 1) BASIC INFORMATION (MASTER)
 CREATE TABLE IF NOT EXISTS schools (
@@ -53,9 +54,9 @@ CREATE TABLE IF NOT EXISTS schools (
   status TEXT DEFAULT 'DRAFT'
 );
 
-CREATE INDEX idx_schools_code ON schools(school_code);
-CREATE INDEX idx_schools_district ON schools(district);
-CREATE INDEX idx_schools_status ON schools(status);
+CREATE INDEX IF NOT EXISTS idx_schools_code ON schools(school_code);
+CREATE INDEX IF NOT EXISTS idx_schools_district ON schools(district);
+CREATE INDEX IF NOT EXISTS idx_schools_status ON schools(status);
 
 -- 2) TRUST & MANAGEMENT
 CREATE TABLE IF NOT EXISTS trust_management_details (
@@ -139,7 +140,7 @@ CREATE TABLE IF NOT EXISTS class_wise_student_strength (
   PRIMARY KEY (school_mobile_no, class_name)
 );
 
-CREATE INDEX idx_students_school ON class_wise_student_strength(school_mobile_no);
+CREATE INDEX IF NOT EXISTS idx_students_school ON class_wise_student_strength(school_mobile_no);
 
 -- 4) INFRASTRUCTURE
 CREATE TABLE IF NOT EXISTS school_infrastructure (
@@ -203,8 +204,8 @@ CREATE TABLE IF NOT EXISTS school_certificates (
   PRIMARY KEY (school_mobile_no, certificate_type)
 );
 
-CREATE INDEX idx_blocks_school ON school_building_blocks(school_mobile_no);
-CREATE INDEX idx_certs_school ON school_certificates(school_mobile_no);
+CREATE INDEX IF NOT EXISTS idx_blocks_school ON school_building_blocks(school_mobile_no);
+CREATE INDEX IF NOT EXISTS idx_certs_school ON school_certificates(school_mobile_no);
 
 -- 5) FEES & OTHERS
 CREATE TABLE IF NOT EXISTS fees_fixation_details (
@@ -251,18 +252,110 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_users_updated ON users;
 CREATE TRIGGER trg_users_updated BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_schools_updated ON schools;
 CREATE TRIGGER trg_schools_updated BEFORE UPDATE ON schools FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_trust_updated ON trust_management_details;
 CREATE TRIGGER trg_trust_updated BEFORE UPDATE ON trust_management_details FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_staff_updated ON staff_summary;
 CREATE TRIGGER trg_staff_updated BEFORE UPDATE ON staff_summary FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_non_teach_updated ON non_teaching_staff_summary;
 CREATE TRIGGER trg_non_teach_updated BEFORE UPDATE ON non_teaching_staff_summary FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_students_updated ON class_wise_student_strength;
 CREATE TRIGGER trg_students_updated BEFORE UPDATE ON class_wise_student_strength FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_infra_updated ON school_infrastructure;
 CREATE TRIGGER trg_infra_updated BEFORE UPDATE ON school_infrastructure FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_blocks_updated ON school_building_blocks;
 CREATE TRIGGER trg_blocks_updated BEFORE UPDATE ON school_building_blocks FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_certs_updated ON school_certificates;
 CREATE TRIGGER trg_certs_updated BEFORE UPDATE ON school_certificates FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_fees_updated ON fees_fixation_details;
 CREATE TRIGGER trg_fees_updated BEFORE UPDATE ON fees_fixation_details FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_vehicles_updated ON school_vehicles;
 CREATE TRIGGER trg_vehicles_updated BEFORE UPDATE ON school_vehicles FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS trg_compliance_updated ON school_other_compliance_details;
 CREATE TRIGGER trg_compliance_updated BEFORE UPDATE ON school_other_compliance_details FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- v2: New teacher structure, CBSE fields, room details, classroom grid
+-- ============================================
+
+-- 6A) New teaching staff columns on staff_summary
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS secondary_grade_dted_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS secondary_grade_dted_tet_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS graduate_assistant_bed_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS graduate_assistant_bed_tet_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS post_graduate_teacher_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS computer_teacher_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS computer_teacher_tet_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS physical_education_teacher_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS other_special_teacher_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS post_graduate_teacher_tet_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS physical_education_teacher_tet_count INTEGER DEFAULT 0;
+ALTER TABLE staff_summary ADD COLUMN IF NOT EXISTS other_special_teacher_tet_count INTEGER DEFAULT 0;
+
+-- 6B) CBSE registration fields on trust_management_details
+ALTER TABLE trust_management_details ADD COLUMN IF NOT EXISTS cbse_noc_date_no TEXT;
+ALTER TABLE trust_management_details ADD COLUMN IF NOT EXISTS cbse_noc_document_path TEXT;
+ALTER TABLE trust_management_details ADD COLUMN IF NOT EXISTS cbse_affiliation_date_no TEXT;
+ALTER TABLE trust_management_details ADD COLUMN IF NOT EXISTS cbse_affiliation_classes TEXT;
+ALTER TABLE trust_management_details ADD COLUMN IF NOT EXISTS cbse_affiliation_document_path TEXT;
+ALTER TABLE trust_management_details ADD COLUMN IF NOT EXISTS cbse_recognition_period_classes TEXT;
+ALTER TABLE trust_management_details ADD COLUMN IF NOT EXISTS cbse_recognition_date_no TEXT;
+ALTER TABLE trust_management_details ADD COLUMN IF NOT EXISTS cbse_recognition_document_path TEXT;
+
+-- 6C) Room details table
+CREATE TABLE IF NOT EXISTS school_room_details (
+  school_mobile_no VARCHAR(10) NOT NULL REFERENCES schools(school_mobile_no) ON UPDATE CASCADE ON DELETE CASCADE,
+  room_type TEXT NOT NULL,
+  serial_no INTEGER NOT NULL,
+  num_rooms INTEGER DEFAULT 0,
+  block TEXT,
+  floor TEXT,
+  area_sqft TEXT,
+  roofing TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (school_mobile_no, room_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_room_details_school ON school_room_details(school_mobile_no);
+
+DROP TRIGGER IF EXISTS trg_room_details_updated ON school_room_details;
+CREATE TRIGGER trg_room_details_updated BEFORE UPDATE ON school_room_details FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- 6D) Playground area on infrastructure
+ALTER TABLE school_infrastructure ADD COLUMN IF NOT EXISTS total_playground_area_sqft TEXT;
+
+-- 6E) Classroom distribution grid
+CREATE TABLE IF NOT EXISTS school_classroom_grid (
+  school_mobile_no VARCHAR(10) NOT NULL REFERENCES schools(school_mobile_no) ON UPDATE CASCADE ON DELETE CASCADE,
+  block_no INTEGER NOT NULL,
+  ground_floor_rooms INTEGER DEFAULT 0,
+  first_floor_rooms INTEGER DEFAULT 0,
+  second_floor_rooms INTEGER DEFAULT 0,
+  third_floor_rooms INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (school_mobile_no, block_no)
+);
+
+CREATE INDEX IF NOT EXISTS idx_classroom_grid_school ON school_classroom_grid(school_mobile_no);
+
+DROP TRIGGER IF EXISTS trg_classroom_grid_updated ON school_classroom_grid;
+CREATE TRIGGER trg_classroom_grid_updated BEFORE UPDATE ON school_classroom_grid FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ============================================
 -- Supabase Storage bucket (run via dashboard or CLI)

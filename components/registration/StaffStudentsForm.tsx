@@ -82,84 +82,52 @@ const StaffStudentsForm: React.FC<StaffStudentsFormProps> = ({ formData, updateF
       {/* Teaching Staff */}
       <div className="bg-blue-50 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">{ss.teachingStaff}</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{ss.pg}</label>
-            <input
-              type="number"
-              name="teachingPG"
-              value={formData.teachingPG || ''}
-              onChange={handleChange}
-              min="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{ss.ug}</label>
-            <input
-              type="number"
-              name="teachingUG"
-              value={formData.teachingUG || ''}
-              onChange={handleChange}
-              min="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{ss.sgt}</label>
-            <input
-              type="number"
-              name="teachingSGT"
-              value={formData.teachingSGT || ''}
-              onChange={handleChange}
-              min="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{ss.bed}</label>
-            <input
-              type="number"
-              name="teachingBEd"
-              value={formData.teachingBEd || ''}
-              onChange={handleChange}
-              min="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{ss.med}</label>
-            <input
-              type="number"
-              name="teachingMEd"
-              value={formData.teachingMEd || ''}
-              onChange={handleChange}
-              min="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{ss.tetQualifiedBed}</label>
-            <input
-              type="number"
-              name="teachingTETBEd"
-              value={formData.teachingTETBEd || ''}
-              onChange={handleChange}
-              min="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">TET Qualified (Secondary Grade)</label>
-            <input
-              type="number"
-              name="teachingTETSecondary"
-              value={formData.teachingTETSecondary || ''}
-              onChange={handleChange}
-              min="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
-            />
-          </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px]">
+            <thead>
+              <tr className="bg-blue-100">
+                <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700 w-16">{language === 'en' ? 'S.No' : 'வ.எண்'}</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-gray-700">{language === 'en' ? 'Post & Educational Qualification' : 'பதவி & கல்வி தகுதி'}</th>
+                <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700 w-36">{language === 'en' ? 'No. of Teachers' : 'ஆசிரியர் எண்ணிக்கை'}</th>
+                <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700 w-36">{language === 'en' ? 'No. of teachers with TET qualification' : 'TET தகுதி பெற்ற ஆசிரியர்கள் எண்ணிக்கை'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { sno: 1, label: language === 'en' ? 'Secondary Grade (D.T.Ed.)' : 'இரண்டாம் நிலை (D.T.Ed.)', countField: 'secondaryGradeCount', tetField: 'secondaryGradeTetCount' },
+                { sno: 2, label: language === 'en' ? 'Graduate Assistants (B.Ed.)' : 'பட்டதாரி உதவியாளர்கள் (B.Ed.)', countField: 'graduateAssistantCount', tetField: 'graduateAssistantTetCount' },
+                { sno: 3, label: language === 'en' ? 'Post Graduate Teachers' : 'முதுகலை ஆசிரியர்கள்', countField: 'postGraduateTeacherCount', tetField: 'postGraduateTeacherTetCount' },
+                { sno: 4, label: language === 'en' ? 'Computer Teachers' : 'கணினி ஆசிரியர்கள்', countField: 'computerTeacherCount', tetField: 'computerTeacherTetCount' },
+                { sno: 5, label: language === 'en' ? 'Physical Education Teacher' : 'உடற்கல்வி ஆசிரியர்', countField: 'physicalEducationTeacherCount', tetField: 'physicalEducationTeacherTetCount' },
+                { sno: 6, label: language === 'en' ? 'Other Special Teachers' : 'பிற சிறப்பு ஆசிரியர்கள்', countField: 'otherSpecialTeacherCount', tetField: 'otherSpecialTeacherTetCount' },
+              ].map((row, index) => (
+                <tr key={row.sno} className={index % 2 === 0 ? 'bg-white' : 'bg-blue-50/50'}>
+                  <td className="px-3 py-2 text-center text-sm font-medium text-gray-700">{row.sno}</td>
+                  <td className="px-3 py-2 text-sm text-gray-700">{row.label}</td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      name={row.countField}
+                      min="0"
+                      value={formData[row.countField] || ''}
+                      onChange={handleChange}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-center text-sm focus:ring-2 focus:ring-tn-green focus:border-transparent"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      name={row.tetField}
+                      min="0"
+                      value={formData[row.tetField] || ''}
+                      onChange={handleChange}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-center text-sm focus:ring-2 focus:ring-tn-green focus:border-transparent"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 

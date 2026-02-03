@@ -115,6 +115,15 @@ export function mapFormDataToBackend(formData: any, mobile: string) {
       classes_to: formData.classesFunctioningTo || null,
       is_pta_formed: formData.ptaFormed === 'Yes' || formData.ptaFormed === true || false,
       pta_affiliation_payment_details: formData.ptaAffiliationDetails || null,
+      // CBSE fields
+      cbse_noc_date_no: formData.cbseNocDateNo || null,
+      cbse_noc_document_path: formData.cbseNocDocumentPath || null,
+      cbse_affiliation_date_no: formData.cbseAffiliationDateNo || null,
+      cbse_affiliation_classes: formData.cbseAffiliationClasses || null,
+      cbse_affiliation_document_path: formData.cbseAffiliationDocumentPath || null,
+      cbse_recognition_period_classes: formData.cbseRecognitionPeriodClasses || null,
+      cbse_recognition_date_no: formData.cbseRecognitionDateNo || null,
+      cbse_recognition_document_path: formData.cbseRecognitionDocumentPath || null,
     } : null,
     staff: {
       // Always include summary structure - let backend handle empty values
@@ -126,6 +135,19 @@ export function mapFormDataToBackend(formData: any, mobile: string) {
         teaching_med_count: parseInt(formData.teachingMEd) || 0,
         tet_bed_qualified_count: parseInt(formData.teachingTETBEd) || 0,
         tet_sgt_qualified_count: parseInt(formData.teachingTETSecondary) || 0,
+        // New teacher table fields
+        secondary_grade_dted_count: parseInt(formData.secondaryGradeCount) || 0,
+        secondary_grade_dted_tet_count: parseInt(formData.secondaryGradeTetCount) || 0,
+        graduate_assistant_bed_count: parseInt(formData.graduateAssistantCount) || 0,
+        graduate_assistant_bed_tet_count: parseInt(formData.graduateAssistantTetCount) || 0,
+        post_graduate_teacher_count: parseInt(formData.postGraduateTeacherCount) || 0,
+        computer_teacher_count: parseInt(formData.computerTeacherCount) || 0,
+        computer_teacher_tet_count: parseInt(formData.computerTeacherTetCount) || 0,
+        post_graduate_teacher_tet_count: parseInt(formData.postGraduateTeacherTetCount) || 0,
+        physical_education_teacher_count: parseInt(formData.physicalEducationTeacherCount) || 0,
+        physical_education_teacher_tet_count: parseInt(formData.physicalEducationTeacherTetCount) || 0,
+        other_special_teacher_count: parseInt(formData.otherSpecialTeacherCount) || 0,
+        other_special_teacher_tet_count: parseInt(formData.otherSpecialTeacherTetCount) || 0,
         support_office_staff_count: parseInt(formData.supportOfficeStaff) || 0,
         support_accountant_count: parseInt(formData.supportAccountants) || 0,
         support_library_staff_count: parseInt(formData.supportLibrary) || 0,
@@ -180,6 +202,7 @@ export function mapFormDataToBackend(formData: any, mobile: string) {
         drinking_water_photo_path: formData.drinkingWaterPhotoPath || null,
         hand_wash_taps_count: parseInt(formData.handWashTaps) || 0,
         hand_wash_photo_path: formData.handWashPhotoPath || null,
+        total_playground_area_sqft: formData.totalPlaygroundArea || null,
       },
       blocks: (() => {
         console.log('[DataMapper] ===== BUILDINGS MAPPING =====');
@@ -367,6 +390,24 @@ export function mapFormDataToBackend(formData: any, mobile: string) {
         console.log('[DataMapper] ===== END CERTIFICATES MAPPING =====');
         return certs;
       })(),
+      // Room details
+      roomDetails: formData.roomDetails ? Object.entries(formData.roomDetails).map(([roomType, data]: [string, any]) => ({
+        room_type: roomType,
+        serial_no: data.sno || 0,
+        num_rooms: parseInt(data.numRooms) || 0,
+        block: data.block || null,
+        floor: data.floor || null,
+        area_sqft: data.areaSqft || null,
+        roofing: data.roofing || null,
+      })) : [],
+      // Classroom grid
+      classroomGrid: formData.classroomGrid ? Object.entries(formData.classroomGrid).map(([blockKey, data]: [string, any]) => ({
+        block_no: parseInt(blockKey.replace('block_', '')) || 0,
+        ground_floor_rooms: parseInt(data.ground) || 0,
+        first_floor_rooms: parseInt(data.first) || 0,
+        second_floor_rooms: parseInt(data.second) || 0,
+        third_floor_rooms: parseInt(data.third) || 0,
+      })) : [],
     },
     fees: {
       feesFixation: {
@@ -511,6 +552,15 @@ export function mapBackendDataToForm(backendData: any) {
     classesFunctioningTo: trust.classes_to || '',
     ptaFormed: trust.is_pta_formed === 1 ? 'Yes' : 'No',
     ptaAffiliationDetails: trust.pta_affiliation_payment_details || '',
+    // CBSE fields
+    cbseNocDateNo: trust.cbse_noc_date_no || '',
+    cbseNocDocumentPath: trust.cbse_noc_document_path || '',
+    cbseAffiliationDateNo: trust.cbse_affiliation_date_no || '',
+    cbseAffiliationClasses: trust.cbse_affiliation_classes || '',
+    cbseAffiliationDocumentPath: trust.cbse_affiliation_document_path || '',
+    cbseRecognitionPeriodClasses: trust.cbse_recognition_period_classes || '',
+    cbseRecognitionDateNo: trust.cbse_recognition_date_no || '',
+    cbseRecognitionDocumentPath: trust.cbse_recognition_document_path || '',
     // Staff & Students - flat structure to match form
     teachingPG: staff.summary?.teaching_pg_count?.toString() || '',
     teachingUG: staff.summary?.teaching_ug_count?.toString() || '',
@@ -519,6 +569,19 @@ export function mapBackendDataToForm(backendData: any) {
     teachingMEd: staff.summary?.teaching_med_count?.toString() || '',
     teachingTETBEd: staff.summary?.tet_bed_qualified_count?.toString() || '',
     teachingTETSecondary: staff.summary?.tet_sgt_qualified_count?.toString() || '',
+    // New teacher table fields
+    secondaryGradeCount: staff.summary?.secondary_grade_dted_count?.toString() || '',
+    secondaryGradeTetCount: staff.summary?.secondary_grade_dted_tet_count?.toString() || '',
+    graduateAssistantCount: staff.summary?.graduate_assistant_bed_count?.toString() || '',
+    graduateAssistantTetCount: staff.summary?.graduate_assistant_bed_tet_count?.toString() || '',
+    postGraduateTeacherCount: staff.summary?.post_graduate_teacher_count?.toString() || '',
+    postGraduateTeacherTetCount: staff.summary?.post_graduate_teacher_tet_count?.toString() || '',
+    computerTeacherCount: staff.summary?.computer_teacher_count?.toString() || '',
+    computerTeacherTetCount: staff.summary?.computer_teacher_tet_count?.toString() || '',
+    physicalEducationTeacherCount: staff.summary?.physical_education_teacher_count?.toString() || '',
+    physicalEducationTeacherTetCount: staff.summary?.physical_education_teacher_tet_count?.toString() || '',
+    otherSpecialTeacherCount: staff.summary?.other_special_teacher_count?.toString() || '',
+    otherSpecialTeacherTetCount: staff.summary?.other_special_teacher_tet_count?.toString() || '',
     supportOfficeStaff: staff.summary?.support_office_staff_count?.toString() || '',
     supportAccountants: staff.summary?.support_accountant_count?.toString() || '',
     supportLibrary: staff.summary?.support_library_staff_count?.toString() || '',
@@ -559,6 +622,38 @@ export function mapBackendDataToForm(backendData: any) {
     drinkingWaterPhotoPath: infrastructure.main?.drinking_water_photo_path || '',
     handWashTaps: infrastructure.main?.hand_wash_taps_count?.toString() || '',
     handWashPhotoPath: infrastructure.main?.hand_wash_photo_path || '',
+    totalPlaygroundArea: infrastructure.main?.total_playground_area_sqft || '',
+    // Room details - nested object keyed by room type
+    roomDetails: (() => {
+      const rd: any = {};
+      if (infrastructure.roomDetails && Array.isArray(infrastructure.roomDetails)) {
+        infrastructure.roomDetails.forEach((room: any) => {
+          rd[room.room_type] = {
+            numRooms: room.num_rooms?.toString() || '',
+            block: room.block || '',
+            floor: room.floor || '',
+            areaSqft: room.area_sqft || '',
+            roofing: room.roofing || '',
+          };
+        });
+      }
+      return rd;
+    })(),
+    // Classroom grid - nested object keyed by block
+    classroomGrid: (() => {
+      const cg: any = {};
+      if (infrastructure.classroomGrid && Array.isArray(infrastructure.classroomGrid)) {
+        infrastructure.classroomGrid.forEach((row: any) => {
+          cg[`block_${row.block_no}`] = {
+            ground: row.ground_floor_rooms?.toString() || '',
+            first: row.first_floor_rooms?.toString() || '',
+            second: row.second_floor_rooms?.toString() || '',
+            third: row.third_floor_rooms?.toString() || '',
+          };
+        });
+      }
+      return cg;
+    })(),
     // Buildings - flat array to match form expectations
     buildings: infrastructure.blocks ? infrastructure.blocks.map((block: any) => ({
       yearOfConstruction: block.year_of_construction || '',

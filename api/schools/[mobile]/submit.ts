@@ -91,6 +91,15 @@ async function saveSchoolData(mobile: string, data: any) {
       first_board_exam_12_year: t.first_board_exam_12_year || null,
       classes_from: t.classes_from || null, classes_to: t.classes_to || null,
       is_pta_formed: !!t.is_pta_formed, pta_affiliation_payment_details: t.pta_affiliation_payment_details || null,
+      // CBSE fields
+      cbse_noc_date_no: t.cbse_noc_date_no || null,
+      cbse_noc_document_path: t.cbse_noc_document_path || null,
+      cbse_affiliation_date_no: t.cbse_affiliation_date_no || null,
+      cbse_affiliation_classes: t.cbse_affiliation_classes || null,
+      cbse_affiliation_document_path: t.cbse_affiliation_document_path || null,
+      cbse_recognition_period_classes: t.cbse_recognition_period_classes || null,
+      cbse_recognition_date_no: t.cbse_recognition_date_no || null,
+      cbse_recognition_document_path: t.cbse_recognition_document_path || null,
     }, { onConflict: 'school_mobile_no' });
   }
 
@@ -102,6 +111,19 @@ async function saveSchoolData(mobile: string, data: any) {
       teaching_sgt_count: s.teaching_sgt_count || 0, teaching_bed_count: s.teaching_bed_count || 0,
       teaching_med_count: s.teaching_med_count || 0,
       tet_bed_qualified_count: s.tet_bed_qualified_count || 0, tet_sgt_qualified_count: s.tet_sgt_qualified_count || 0,
+      // New teacher table fields
+      secondary_grade_dted_count: s.secondary_grade_dted_count || 0,
+      secondary_grade_dted_tet_count: s.secondary_grade_dted_tet_count || 0,
+      graduate_assistant_bed_count: s.graduate_assistant_bed_count || 0,
+      graduate_assistant_bed_tet_count: s.graduate_assistant_bed_tet_count || 0,
+      post_graduate_teacher_count: s.post_graduate_teacher_count || 0,
+      post_graduate_teacher_tet_count: s.post_graduate_teacher_tet_count || 0,
+      computer_teacher_count: s.computer_teacher_count || 0,
+      computer_teacher_tet_count: s.computer_teacher_tet_count || 0,
+      physical_education_teacher_count: s.physical_education_teacher_count || 0,
+      physical_education_teacher_tet_count: s.physical_education_teacher_tet_count || 0,
+      other_special_teacher_count: s.other_special_teacher_count || 0,
+      other_special_teacher_tet_count: s.other_special_teacher_tet_count || 0,
       support_office_staff_count: s.support_office_staff_count || 0, support_accountant_count: s.support_accountant_count || 0,
       support_library_staff_count: s.support_library_staff_count || 0, support_drawing_staff_count: s.support_drawing_staff_count || 0,
       support_pet_staff_count: s.support_pet_staff_count || 0, support_others_count: s.support_others_count || 0,
@@ -154,6 +176,7 @@ async function saveSchoolData(mobile: string, data: any) {
       youtube_link: i.youtube_link || null, lift_or_ramps: i.lift_or_ramps || null,
       ramp_at_entry: i.ramp_at_entry || null, cwsn_toilets: i.cwsn_toilets || null,
       stability_cert_issued_by: i.stability_cert_issued_by || null,
+      total_playground_area_sqft: i.total_playground_area_sqft || null,
     }, { onConflict: 'school_mobile_no' });
   }
 
@@ -211,5 +234,31 @@ async function saveSchoolData(mobile: string, data: any) {
       salary_processed_through_ecs: !!o.salary_processed_through_ecs,
       declaration_accepted: !!o.declaration_accepted,
     }, { onConflict: 'school_mobile_no' });
+  }
+
+  // Room Details (multi-row: delete + insert)
+  if (data.infrastructure?.roomDetails?.length > 0) {
+    await supabase.from('school_room_details').delete().eq('school_mobile_no', mobile);
+    const rows = data.infrastructure.roomDetails
+      .filter((r: any) => r.room_type)
+      .map((r: any, idx: number) => ({
+        school_mobile_no: mobile, room_type: r.room_type, serial_no: r.serial_no || idx + 1,
+        num_rooms: r.num_rooms || 0, block: r.block || null, floor: r.floor || null,
+        area_sqft: r.area_sqft || null, roofing: r.roofing || null,
+      }));
+    if (rows.length > 0) await supabase.from('school_room_details').insert(rows);
+  }
+
+  // Classroom Grid (multi-row: delete + insert)
+  if (data.infrastructure?.classroomGrid?.length > 0) {
+    await supabase.from('school_classroom_grid').delete().eq('school_mobile_no', mobile);
+    const rows = data.infrastructure.classroomGrid
+      .filter((g: any) => g.block_no)
+      .map((g: any) => ({
+        school_mobile_no: mobile, block_no: g.block_no,
+        ground_floor_rooms: g.ground_floor_rooms || 0, first_floor_rooms: g.first_floor_rooms || 0,
+        second_floor_rooms: g.second_floor_rooms || 0, third_floor_rooms: g.third_floor_rooms || 0,
+      }));
+    if (rows.length > 0) await supabase.from('school_classroom_grid').insert(rows);
   }
 }

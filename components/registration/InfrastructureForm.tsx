@@ -95,6 +95,56 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
     }
   };
 
+  const roomTypes = [
+    { key: 'principal_room', sno: 1, label: language === 'en' ? 'Principal room' : 'முதல்வர் அறை' },
+    { key: 'office_room', sno: 2, label: language === 'en' ? 'Office room' : 'அலுவலக அறை' },
+    { key: 'staff_room_men', sno: 3, label: language === 'en' ? 'Staff room (Men)' : 'ஊழியர் அறை (ஆண்)' },
+    { key: 'staff_room_women', sno: 4, label: language === 'en' ? 'Staff room (Women)' : 'ஊழியர் அறை (பெண்)' },
+    { key: 'lab_general', sno: 5, label: language === 'en' ? 'Laboratory (General) - incase of High School' : 'ஆய்வகம் (பொது) - உயர்நிலைப் பள்ளி எனில்' },
+    { key: 'lab_physics', sno: 6, label: language === 'en' ? 'Laboratory (Physics)' : 'ஆய்வகம் (இயற்பியல்)' },
+    { key: 'lab_chemistry', sno: 7, label: language === 'en' ? 'Laboratory (Chemistry)' : 'ஆய்வகம் (வேதியியல்)' },
+    { key: 'lab_biology', sno: 8, label: language === 'en' ? 'Laboratory (Biology)' : 'ஆய்வகம் (உயிரியல்)' },
+    { key: 'lab_computer_science', sno: 9, label: language === 'en' ? 'Laboratory (Computer Science)' : 'ஆய்வகம் (கணினி அறிவியல்)' },
+    { key: 'library', sno: 10, label: language === 'en' ? 'Library' : 'நூலகம்' },
+    { key: 'pet_room', sno: 11, label: language === 'en' ? 'PET room' : 'உடற்கல்வி ஆசிரியர் அறை' },
+    { key: 'co_curricular_activity_room', sno: 12, label: language === 'en' ? 'Co-curricular activity room' : 'இணைப் பாடத்திட்ட செயல்பாட்டு அறை' },
+  ];
+
+  const handleRoomDetailChange = (roomKey: string, field: string, value: string) => {
+    const roomDetails = formData.roomDetails || {};
+    updateFormData({
+      roomDetails: {
+        ...roomDetails,
+        [roomKey]: {
+          ...(roomDetails[roomKey] || {}),
+          [field]: value,
+        },
+      },
+    });
+  };
+
+  const handleClassroomGridChange = (blockKey: string, floor: string, value: string) => {
+    const classroomGrid = formData.classroomGrid || {};
+    updateFormData({
+      classroomGrid: {
+        ...classroomGrid,
+        [blockKey]: {
+          ...(classroomGrid[blockKey] || {}),
+          [floor]: value,
+        },
+      },
+    });
+  };
+
+  const getFloorTotal = (floor: string) => {
+    const grid = formData.classroomGrid || {};
+    let total = 0;
+    for (let i = 1; i <= 5; i++) {
+      total += parseInt(grid[`block_${i}`]?.[floor]) || 0;
+    }
+    return total;
+  };
+
   const [blockUploadSuccess, setBlockUploadSuccess] = useState<{[key: string]: string}>({});
   const blockOrderRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const floorOrderRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
@@ -372,6 +422,118 @@ const InfrastructureForm: React.FC<InfrastructureFormProps> = ({ formData, updat
             )}
           </div>
         </div>
+      </div>
+
+      {/* Room Details Table */}
+      <div className="bg-teal-50 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          {language === 'en' ? 'Details of Rooms Available' : 'கிடைக்கும் அறைகளின் விவரங்கள்'}
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
+            <thead>
+              <tr className="bg-teal-100">
+                <th className="px-2 py-2 text-center text-sm font-semibold text-gray-700 w-12">{language === 'en' ? 'S.No' : 'வ.எண்'}</th>
+                <th className="px-3 py-2 text-left text-sm font-semibold text-gray-700">{language === 'en' ? 'Details of Rooms' : 'அறைகளின் விவரங்கள்'}</th>
+                <th className="px-2 py-2 text-center text-sm font-semibold text-gray-700 w-24">{language === 'en' ? 'No. of Rooms' : 'அறைகள் எண்'}</th>
+                <th className="px-2 py-2 text-center text-sm font-semibold text-gray-700 w-24">{language === 'en' ? 'Block' : 'தொகுதி'}</th>
+                <th className="px-2 py-2 text-center text-sm font-semibold text-gray-700 w-24">{language === 'en' ? 'Floor' : 'தளம்'}</th>
+                <th className="px-2 py-2 text-center text-sm font-semibold text-gray-700 w-28">{language === 'en' ? 'Area Sq.ft.' : 'பரப்பு சதுர அடி'}</th>
+                <th className="px-2 py-2 text-center text-sm font-semibold text-gray-700 w-28">{language === 'en' ? 'Roofing' : 'கூரை'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {roomTypes.map((room, index) => (
+                <tr key={room.key} className={index % 2 === 0 ? 'bg-white' : 'bg-teal-50/50'}>
+                  <td className="px-2 py-2 text-center text-sm font-medium text-gray-700">{room.sno}</td>
+                  <td className="px-3 py-2 text-sm text-gray-700">{room.label}</td>
+                  <td className="px-2 py-1">
+                    <input type="number" min="0" value={formData.roomDetails?.[room.key]?.numRooms || ''} onChange={(e) => handleRoomDetailChange(room.key, 'numRooms', e.target.value)} className="w-full px-2 py-1.5 border border-gray-300 rounded text-center text-sm focus:ring-2 focus:ring-tn-green focus:border-transparent" />
+                  </td>
+                  <td className="px-2 py-1">
+                    <input type="text" value={formData.roomDetails?.[room.key]?.block || ''} onChange={(e) => handleRoomDetailChange(room.key, 'block', e.target.value)} className="w-full px-2 py-1.5 border border-gray-300 rounded text-center text-sm focus:ring-2 focus:ring-tn-green focus:border-transparent" />
+                  </td>
+                  <td className="px-2 py-1">
+                    <input type="text" value={formData.roomDetails?.[room.key]?.floor || ''} onChange={(e) => handleRoomDetailChange(room.key, 'floor', e.target.value)} className="w-full px-2 py-1.5 border border-gray-300 rounded text-center text-sm focus:ring-2 focus:ring-tn-green focus:border-transparent" />
+                  </td>
+                  <td className="px-2 py-1">
+                    <input type="text" value={formData.roomDetails?.[room.key]?.areaSqft || ''} onChange={(e) => handleRoomDetailChange(room.key, 'areaSqft', e.target.value)} className="w-full px-2 py-1.5 border border-gray-300 rounded text-center text-sm focus:ring-2 focus:ring-tn-green focus:border-transparent" />
+                  </td>
+                  <td className="px-2 py-1">
+                    <input type="text" value={formData.roomDetails?.[room.key]?.roofing || ''} onChange={(e) => handleRoomDetailChange(room.key, 'roofing', e.target.value)} className="w-full px-2 py-1.5 border border-gray-300 rounded text-center text-sm focus:ring-2 focus:ring-tn-green focus:border-transparent" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {language === 'en' ? 'Total Area of Play Ground (Sq.ft.)' : 'விளையாட்டு மைதானத்தின் மொத்த பரப்பு (சதுர அடி)'}
+          </label>
+          <input
+            type="text"
+            name="totalPlaygroundArea"
+            value={formData.totalPlaygroundArea || ''}
+            onChange={handleChange}
+            className="w-full md:w-1/3 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tn-green focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      {/* Classroom Distribution Grid */}
+      <div className="bg-indigo-50 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          {language === 'en' ? 'Classroom Distribution' : 'வகுப்பறை விநியோகம்'}
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[500px]">
+            <thead>
+              <tr className="bg-indigo-100">
+                <th className="px-3 py-2 text-left text-sm font-semibold text-gray-700">{language === 'en' ? 'Building' : 'கட்டிடம்'}</th>
+                <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700">{language === 'en' ? 'Ground Floor' : 'தரை தளம்'}</th>
+                <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700">{language === 'en' ? 'First Floor' : 'முதல் தளம்'}</th>
+                <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700">{language === 'en' ? 'Second Floor' : 'இரண்டாம் தளம்'}</th>
+                <th className="px-3 py-2 text-center text-sm font-semibold text-gray-700">
+                  {language === 'en' ? 'Third Floor*' : 'மூன்றாம் தளம்*'}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {[1, 2, 3, 4, 5].map((blockNum, index) => (
+                <tr key={blockNum} className={index % 2 === 0 ? 'bg-white' : 'bg-indigo-50/50'}>
+                  <td className="px-3 py-2 text-sm font-medium text-gray-700">
+                    {language === 'en' ? `Block ${blockNum}` : `தொகுதி ${blockNum}`}
+                  </td>
+                  {['ground', 'first', 'second', 'third'].map((floor) => (
+                    <td key={floor} className="px-2 py-1">
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.classroomGrid?.[`block_${blockNum}`]?.[floor] || ''}
+                        onChange={(e) => handleClassroomGridChange(`block_${blockNum}`, floor, e.target.value)}
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-center text-sm focus:ring-2 focus:ring-tn-green focus:border-transparent"
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              <tr className="bg-indigo-100 font-semibold">
+                <td className="px-3 py-2 text-sm text-gray-700">
+                  {language === 'en' ? 'Total Rooms' : 'மொத்த அறைகள்'}
+                </td>
+                {['ground', 'first', 'second', 'third'].map((floor) => (
+                  <td key={floor} className="px-3 py-2 text-center text-sm text-gray-700">
+                    {getFloorTotal(floor) || 0}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-gray-500 mt-2 italic">
+          {language === 'en' ? '* Subject to approval from the authorities' : '* அதிகாரிகளின் ஒப்புதலுக்கு உட்பட்டது'}
+        </p>
       </div>
 
       {/* Building Details */}
